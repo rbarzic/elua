@@ -166,7 +166,8 @@ local platform_list =
   stm32 = { cpus = { 'STM32F103ZE', 'STM32F103RE' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } },
   avr32 = { cpus = { 'AT32UC3A0128', 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3B0256' }, toolchains = { 'avr32-gcc', 'avr32-unknown-none-gcc' } },
   lpc24xx = { cpus = { 'LPC2468' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } },
-  lpc17xx = { cpus = { 'LPC1768' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } }
+  lpc17xx = { cpus = { 'LPC1768' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } },
+  sim3u1xx = { cpus = { 'SIM3U167' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } }
 }
 
 -- List of board/CPU combinations
@@ -191,6 +192,7 @@ local board_list =
   [ 'EAGLE-100' ]       = { 'LM3S6918' },
   [ 'ELUA-PUC' ]        = { 'LPC2468' },
   [ 'MBED' ]            = { 'LPC1768' },
+  [ 'SIM3U1XX-B-DK' ]   = { 'SIM3U167' },
   [ 'MIZAR32' ]         = { 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3A0128' },
   [ 'NETDUINO' ]        = { 'AT91SAM7X512' },
 }
