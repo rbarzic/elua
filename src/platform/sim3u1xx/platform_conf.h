@@ -24,7 +24,7 @@
 // UART/Timer IDs configuration data (used in main.c)
 
 #define CON_UART_ID           0
-#define CON_UART_SPEED        9600
+#define CON_UART_SPEED        115200
 #define TERM_LINES            25
 #define TERM_COLS             80
 
@@ -77,12 +77,7 @@
 #define NUM_PWM               0
 #define NUM_ADC               0
 #define NUM_CAN               0
-// If virtual timers are enabled, the last timer will be used only for them
-#if VTMR_NUM_TIMERS == 0
 #define NUM_TIMER             1
-#else
-#define NUM_TIMER             1
-#endif
 
 
 // Enable RX buffering on UART
@@ -91,13 +86,13 @@
 //#define CON_BUF_SIZE          BUF_SIZE_128
 
 // ADC Configuration Params
-#define ADC_BIT_RESOLUTION    12
-#define BUF_ENABLE_ADC
-#define ADC_BUF_SIZE          BUF_SIZE_2
+// #define ADC_BIT_RESOLUTION    12
+// #define BUF_ENABLE_ADC
+// #define ADC_BUF_SIZE          BUF_SIZE_2
 
 // These should be adjusted to support multiple ADC devices
-#define ADC_TIMER_FIRST_ID    0
-#define ADC_NUM_TIMERS        4
+// #define ADC_TIMER_FIRST_ID    0
+// #define ADC_NUM_TIMERS        4
 
 // RPC  
 #define RPC_UART_ID           CON_UART_ID
@@ -118,12 +113,12 @@ u32 cmsis_get_cpu_frequency();
 
 // Allocator data: define your free memory zones here in two arrays
 // (start address and end address)
-#define SRAM_ORIGIN           0x20001000
-#define SRAM_SIZE             0x7000
-#define SRAM2_ORIGIN          0x20000000
-#define SRAM2_SIZE            0x1000
-#define MEM_START_ADDRESS     { ( void* )end, ( void* )SRAM2_ORIGIN }
-#define MEM_END_ADDRESS       { ( void* )( SRAM_ORIGIN + SRAM_SIZE - STACK_SIZE_TOTAL - 1 ), ( void* )( SRAM2_ORIGIN + SRAM2_SIZE - 1 ) }
+#define SRAM_ORIGIN           0x20000000
+#define SRAM_SIZE             0x8000
+//#define SRAM2_ORIGIN          0x20000000
+//#define SRAM2_SIZE            0x1000
+#define MEM_START_ADDRESS     { ( void* )end }
+#define MEM_END_ADDRESS       { ( void* )( SRAM_ORIGIN + SRAM_SIZE - STACK_SIZE_TOTAL - 1 ) }
  
 #endif // #ifndef __PLATFORM_CONF_H__
 

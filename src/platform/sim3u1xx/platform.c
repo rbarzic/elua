@@ -21,11 +21,13 @@
 #include "sim3u1xx.h"
 #include "sim3u1xx_Types.h"
 
-#define SYSTICKHZ             10
+#define SYSTICKHZ             100
 
 // ****************************************************************************
 // Platform initialization
 
+// forward dcls
+static void pios_init();
 
 void hard_fault_handler_c(unsigned int * hardfault_args)
 {
@@ -88,12 +90,11 @@ void mySystemInit(void)
 {
   SI32_WDTIMER_A_stop_counter(SI32_WDTIMER_0);
 
-   // enable APB clock to the Port Bank module
-   SI32_CLKCTRL_A_enable_apb_to_modules_0 (SI32_CLKCTRL_0, SI32_CLKCTRL_A_APBCLKG0_PB0CEN_MASK);
-   // make the SWO pin (PB1.3) push-pull to enable SWV printf
-   SI32_PBSTD_A_set_pins_push_pull_output (SI32_PBSTD_1, (1<<3));
+  // enable APB clock to the Port Bank module
+  SI32_CLKCTRL_A_enable_apb_to_modules_0 (SI32_CLKCTRL_0, SI32_CLKCTRL_A_APBCLKG0_PB0CEN_MASK);
+  // make the SWO pin (PB1.3) push-pull to enable SWV printf
+  SI32_PBSTD_A_set_pins_push_pull_output (SI32_PBSTD_1, (1<<3));
 }
-
 
 int platform_init()
 {
@@ -103,38 +104,13 @@ int platform_init()
   // two (2) bits of preemption priority, six (6) bits of sub-priority.
   // Since the Number of Bits used for Priority Levels is five (5), so the
   // actual bit number of sub-priority is three (3)
-  //NVIC_SetPriorityGrouping(0x05);
+  NVIC_SetPriorityGrouping(0x05);
 
   // Setup peripherals
   // platform_setup_timers();
 
-
-
-  // GPIO Setup
-  SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0, 
-                                         SI32_CLKCTRL_A_APBCLKG0_PB0);
-
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00000008);
-
-  SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
-  SI32_PBCFG_A_enable_crossbar_0(SI32_PBCFG_0);
-
-  // ENABLE LED DRIVERS (P2.11, P2.10)
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_2, 0x00000C00);
-
-  // Enable switch sensing (P2.10, P2.11)
-  SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_2, 0x00000300);
-
-  // UART PINS TO PROPER CONFIG (TX = PB1.12, RX = PB1.13)
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x0001000);    
-  SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_1, 0x00002000);
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_0, 0x0000FFFF);
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_1, 0x00000FFF);
-
-  // BRING OUT UART
-  SI32_PBCFG_A_enable_xbar0h_peripherals(SI32_PBCFG_0, SI32_PBCFG_A_XBAR0H_UART0EN);
-
-  SI32_PBSTD_A_toggle_pins(SI32_PBSTD_2, 0x400);
+  // GPIO setup
+  pios_init();
 
   // System timer setup
   cmn_systimer_set_base_freq( cmsis_get_cpu_frequency() );
@@ -173,6 +149,35 @@ void SysTick_Handler()
 static SI32_PBSTD_A_Type* const port_std[] = { SI32_PBSTD_0, SI32_PBSTD_1, SI32_PBSTD_2, SI32_PBSTD_3 };
 //static SI32_PBCFG_A_Type* const port_cfg[] = { SI32_PBCFG_0, SI32_PBCFG_1, SI32_PBCFG_2, SI32_PBCFG_3 };
 
+void pios_init( void )
+{
+  // GPIO Setup
+  SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0, 
+                                         SI32_CLKCTRL_A_APBCLKG0_PB0);
+
+  // Set up prinf pin
+  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00000008);
+
+  SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
+  SI32_PBCFG_A_enable_crossbar_0(SI32_PBCFG_0);
+
+  // ENABLE LED DRIVERS (P2.11, P2.10)
+  //SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_2, 0x00000C00);
+
+  // Enable switch sensing (P2.10, P2.11)
+  //SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_2, 0x00000300);
+
+  // UART PINS TO PROPER CONFIG (TX = PB1.12, RX = PB1.13)
+  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x0001000);    
+  SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_1, 0x00002000);
+  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_0, 0x0000FFFF);
+  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_1, 0x00000FFF);
+
+  // BRING OUT UART
+  SI32_PBCFG_A_enable_xbar0h_peripherals(SI32_PBCFG_0, SI32_PBCFG_A_XBAR0H_UART0EN);
+}
+
+
 // The platform I/O functions
 pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
 {
@@ -180,32 +185,40 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
   
   switch( op )
   {
-    case PLATFORM_IO_PORT_SET_VALUE:   
+    case PLATFORM_IO_PORT_SET_VALUE:
+      SI32_PBSTD_A_write_pins_masked( port_std[ port ], 0xFFFF, pinmask);
       break;
     
     case PLATFORM_IO_PIN_SET:
+      SI32_PBSTD_A_write_pins_high( port_std[ port ], pinmask );
       break;
     
     case PLATFORM_IO_PIN_CLEAR:
+      SI32_PBSTD_A_write_pins_low( port_std[ port ], pinmask );
       break;
     
     case PLATFORM_IO_PORT_DIR_OUTPUT:
+      SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], 0xFFFF );
       break;    
 
     case PLATFORM_IO_PIN_DIR_OUTPUT:
-      //SI32_PBSTD_A_set_pins_push_pull_output(port_std[ port ], pinmask);
+      SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], pinmask );
       break;
     
     case PLATFORM_IO_PORT_DIR_INPUT:
+      SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], 0xFFFF );
       break;
 
     case PLATFORM_IO_PIN_DIR_INPUT:
+      SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], pinmask );
       break;    
           
     case PLATFORM_IO_PORT_GET_VALUE:
+      retval = SI32_PBSTD_A_read_pins(port_std[ port ]);
       break;
     
     case PLATFORM_IO_PIN_GET:
+      retval = ( SI32_PBSTD_A_read_pins(port_std[ port ]) & pinmask ) ? 1 : 0;
       break;
     
     default:
