@@ -1,0 +1,52 @@
+Compilation Notes
+=================
+
+Silicon Labs HAL
+----------------
+
+In order to compile for this platform, it is currently necessary to copy the
+"si32Hal" directory from within "C:\Silabs\32bit\si32-1.0\" to this directory
+("sim3u1xx"). This is necessary until licensing is less restrictive on these
+components.
+
+General Build Requirements
+--------------------------
+
+In addition standard necessities for building eLua also apply:
+
+* an arm-eabi toolchain
+
+** the Precision32 IDE should work, and if installed in default locations, one
+should be able to run "build_sim3u_dk.cmd" from the sim3u1xx directory to
+perform a build and flash.
+
+* lua with the requisite modules for driving the build system. (check the top
+  of build_elua.lua for requirements)
+
+** They're also included in luaforwindows:
+http://code.google.com/p/luaforwindows/
+
+* Additionally, it's recommended that you use git to check out the repository
+  and have git in the path of wherever you'll be running the build system
+  from.
+
+Building
+--------
+
+If using a codered-based development environment like Precision32 on Windows,
+see "build_sim3u_dk.cmd" for an example of running the build and flashing.
+
+
+For other toolchains on other platforms, one can execute the following
+command:
+
+[source,shell]
+lua build_elua.lua board=SIM3U1XX-B-DK prog
+
+Special Notes
+-------------
+
+The batch file mentioned above may need to have Windows/DOS line endings to execute correctly.  These should be set automatically if the checkout is done with the recommended autocrlf option:
+
+[source,shell]
+git config --global core.autocrlf true

@@ -150,6 +150,7 @@ local toolchain_list =
 
 -- Toolchain Aliases
 toolchain_list[ 'devkitarm' ] = toolchain_list[ 'arm-eabi-gcc' ]
+toolchain_list[ 'codered' ] = toolchain_list[ 'codesourcery' ]
 
 -- List of platform/CPU/toolchains combinations
 -- The first toolchain in the toolchains list is the default one
@@ -167,7 +168,7 @@ local platform_list =
   avr32 = { cpus = { 'AT32UC3A0128', 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3B0256' }, toolchains = { 'avr32-gcc', 'avr32-unknown-none-gcc' } },
   lpc24xx = { cpus = { 'LPC2468' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } },
   lpc17xx = { cpus = { 'LPC1768' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } },
-  sim3u1xx = { cpus = { 'SIM3U167' }, toolchains = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' } }
+  sim3u1xx = { cpus = { 'SIM3U167' }, toolchains = { 'codesourcery', 'codered' } }
 }
 
 -- List of board/CPU combinations
@@ -489,6 +490,10 @@ builder:set_compile_cmd( compcmd )
 builder:set_link_cmd( linkcmd )
 builder:set_asm_cmd( ascmd )
 builder:set_exe_extension( ".elf" )
+
+if comp.toolchain == "codered" then
+   builder:set_object_extension( "o" )
+end
 
 -- Create the ROM file system
 make_romfs()

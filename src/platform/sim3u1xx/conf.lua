@@ -16,6 +16,8 @@ ldscript = sf( "src/platform/%s/%s", platform, ldscript )
 
 addm{ "FOR" .. comp.cpu:upper(), 'gcc', 'CORTEX_M3' }
 
+addm{ "__NEWLIB__" }
+
 -- Standard GCC flags
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall' }
 addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
@@ -26,9 +28,8 @@ local target_flags = { '-mcpu=cortex-m3','-mthumb' }
 
 -- Configure general flags for target
 addcf{ target_flags, '-mlittle-endian' }
-addlf{ target_flags, '-Wl,-static', sf( "-Wl,-Map=%s.map",output) }
+addlf{ target_flags, '-Wl,-static' }
 addaf{ target_flags }
-
 -- Toolset data
 tools.sim3u1xx = {}
 
