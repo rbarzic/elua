@@ -14,27 +14,26 @@ General Build Requirements
 
 In addition standard necessities for building eLua also apply:
 
-* an arm-eabi toolchain
+* an *arm-eabi toolchain*
 
-** the Precision32 IDE should work, and if installed in default locations, one
-should be able to run "build_sim3u_dk.cmd" from the sim3u1xx directory to
-perform a build and flash.
+** the Precision32 IDE works, see "build_sim3u_dk.cmd" for an example
+   of how to run the build from the command line
 
-* lua with the requisite modules for driving the build system. (check the top
+* *Lua* with the requisite modules for driving the build system. (check the top
   of build_elua.lua for requirements)
 
-** They're also included in luaforwindows:
+** LuaForWindows includes all the needed modules:
 http://code.google.com/p/luaforwindows/
 
-* Additionally, it's recommended that you use git to check out the repository
+* Additionally, it's recommended that you use *git* to check out the repository
   and have git in the path of wherever you'll be running the build system
-  from.
+  from (so that build versions include the git rev)
 ** link:http://help.github.com/set-up-git-redirect[See GitHub's documentation]
 
 Building
 --------
 
-If using a codered-based development environment like Precision32 on
+If using a CodeRed-based development environment like Precision32 on
 Windows, see "build_sim3u_dk.cmd" for an example of running the build
 and flashing. If the line endings are correct, on Windows with
 LuaForWindows, the Precision32 IDE, and the line endings correct in
@@ -42,8 +41,8 @@ the script, it should be possible to simply double-click this script
 from the platform directory and have a build and flash run.
 
 
-For other toolchains on other platforms, one can execute the following
-command:
+On other platforms, the following should work from the base eLua
+directory to generate elf and hex images:
 
 ----
 lua build_elua.lua board=SIM3U1XX-B-DK prog
