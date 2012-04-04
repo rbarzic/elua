@@ -34,8 +34,12 @@ http://code.google.com/p/luaforwindows/
 Building
 --------
 
-If using a codered-based development environment like Precision32 on Windows,
-see "build_sim3u_dk.cmd" for an example of running the build and flashing.
+If using a codered-based development environment like Precision32 on
+Windows, see "build_sim3u_dk.cmd" for an example of running the build
+and flashing. If the line endings are correct, on Windows with
+LuaForWindows, the Precision32 IDE, and the line endings correct in
+the script, it should be possible to simply double-click this script
+from the platform directory and have a build and flash run.
 
 
 For other toolchains on other platforms, one can execute the following
