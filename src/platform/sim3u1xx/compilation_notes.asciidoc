@@ -16,8 +16,9 @@ In addition standard necessities for building eLua also apply:
 
 * an *arm-eabi toolchain*
 
-** the Precision32 IDE works, see "build_sim3u_dk.cmd" for an example
-   of how to run the build from the command line
+** the Precision32 IDE works, see "build_sim3u_dk.cmd" and
+   "build_sim3u_gs.cmd" for an example of how to run the build from
+   the command line
 
 * *Lua* with the requisite modules for driving the build system. (check the top
   of build_elua.lua for requirements)
@@ -33,13 +34,17 @@ http://code.google.com/p/luaforwindows/
 Building
 --------
 
-If using a CodeRed-based development environment like Precision32 on
-Windows, see "build_sim3u_dk.cmd" for an example of running the build
-and flashing. If the line endings are correct, on Windows with
+If one is using a CodeRed-based development environment like
+Precision32 on Windows, see "build_sim3u_dk.cmd" and
+"build_sim3u_gs.cmd" for an example of running the build and
+flashing. If the line endings are correct, on Windows with
 LuaForWindows, the Precision32 IDE, and the line endings correct in
 the script, it should be possible to simply double-click this script
 from the platform directory and have a build and flash run.
 
+* The "dk" variant configures pins/clocks for the development kit board.
+
+* The "gs" variant configures for an alternate pin configuration.
 
 On other platforms, the following should work from the base eLua
 directory to generate elf and hex images:
@@ -48,8 +53,8 @@ directory to generate elf and hex images:
 lua build_elua.lua board=SIM3U1XX-B-DK prog
 ----
 
-Special Notes
--------------
+Note on Git & Windows
+---------------------
 
 The batch file mentioned above may need to have Windows/DOS line
 endings to execute correctly.  These should be set automatically by
@@ -58,3 +63,14 @@ git if the checkout is done with the recommended autocrlf option:
 ----
 git config --global core.autocrlf true
 ----
+
+
+Port Notes
+----------
+
+Mapping of UARTS & USARTS to ids in eLua:
+
+* USART0: 0
+* USART1: 1
+* UART0: 2
+* UART1: 3

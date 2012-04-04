@@ -23,7 +23,7 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-#define CON_UART_ID           0
+#define CON_UART_ID           1
 #define CON_UART_SPEED        115200
 #define TERM_LINES            25
 #define TERM_COLS             80
@@ -73,7 +73,7 @@
 // Number of resources (0 if not available/not implemented)
 #define NUM_PIO               4
 #define NUM_SPI               0
-#define NUM_UART              2
+#define NUM_UART              4
 #define NUM_PWM               0
 #define NUM_ADC               0
 #define NUM_CAN               0

@@ -194,6 +194,7 @@ local board_list =
   [ 'ELUA-PUC' ]        = { 'LPC2468' },
   [ 'MBED' ]            = { 'LPC1768' },
   [ 'SIM3U1XX-B-DK' ]   = { 'SIM3U167' },
+  [ 'GSBRD' ]           = { 'SIM3U167' },
   [ 'MIZAR32' ]         = { 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3A0128' },
   [ 'NETDUINO' ]        = { 'AT91SAM7X512' },
 }
