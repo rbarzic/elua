@@ -40,13 +40,15 @@ see "build_sim3u_dk.cmd" for an example of running the build and flashing.
 For other toolchains on other platforms, one can execute the following
 command:
 
-[source,shell]
+----
 lua build_elua.lua board=SIM3U1XX-B-DK prog
+----
 
 Special Notes
 -------------
 
 The batch file mentioned above may need to have Windows/DOS line endings to execute correctly.  These should be set automatically if the checkout is done with the recommended autocrlf option:
 
-[source,shell]
+----
 git config --global core.autocrlf true
+----
