@@ -29,6 +29,7 @@ http://code.google.com/p/luaforwindows/
 * Additionally, it's recommended that you use git to check out the repository
   and have git in the path of wherever you'll be running the build system
   from.
+** link:http://help.github.com/set-up-git-redirect[See GitHub's documentation]
 
 Building
 --------
@@ -47,7 +48,9 @@ lua build_elua.lua board=SIM3U1XX-B-DK prog
 Special Notes
 -------------
 
-The batch file mentioned above may need to have Windows/DOS line endings to execute correctly.  These should be set automatically if the checkout is done with the recommended autocrlf option:
+The batch file mentioned above may need to have Windows/DOS line
+endings to execute correctly.  These should be set automatically by
+git if the checkout is done with the recommended autocrlf option:
 
 ----
 git config --global core.autocrlf true
