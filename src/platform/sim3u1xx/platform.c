@@ -526,7 +526,7 @@ int platform_s_uart_set_flow_control( unsigned id, int type )
     }
     if( type & PLATFORM_UART_FLOW_CTS )
     {
-      SI32_USART_A_enable_rts( usart[ id ] );
+      SI32_USART_A_enable_cts( usart[ id ] );
     }
     if( type & PLATFORM_UART_FLOW_RTS )
     {
@@ -543,7 +543,7 @@ int platform_s_uart_set_flow_control( unsigned id, int type )
     }
     if( type & PLATFORM_UART_FLOW_CTS )
     {
-      SI32_UART_A_enable_rts( uart[ id ] );
+      SI32_UART_A_enable_cts( uart[ id ] );
     }
     if( type & PLATFORM_UART_FLOW_RTS )
     {
