@@ -23,7 +23,7 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-#define CON_UART_ID           0
+#define CON_UART_ID           2
 #define CON_UART_SPEED        115200
 #define TERM_LINES            25
 #define TERM_COLS             80
@@ -64,7 +64,7 @@
 // *****************************************************************************
 // Configuration data
 
-#define EGC_INITIAL_MODE      4
+#define EGC_INITIAL_MODE      1
 
 // Virtual timers (0 if not used)
 #define VTMR_NUM_TIMERS       0

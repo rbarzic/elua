@@ -74,3 +74,23 @@ Mapping of UARTS & USARTS to ids in eLua:
 * USART1: 1
 * UART0: 2
 * UART1: 3
+
+In addition a memory status function has been added to keep an eye on
+heap allocation:
+
+----
+heap,inuse = elua.heapstats()
+----
+
+*heap*: size of total heap in bytes
+
+*inuse*: bytes for current allocations within heap
+
+Change Notes
+------------
+
+2012-04-04:
+
+* Replaced linker script to get rid of separation between retention RAM & rest of memory
+
+* Added elua.heapstats() function which returns current heap size & how much is in use

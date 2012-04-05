@@ -28,7 +28,7 @@ local target_flags = { '-mcpu=cortex-m3','-mthumb' }
 
 -- Configure general flags for target
 addcf{ target_flags, '-mlittle-endian' }
-addlf{ target_flags, '-Wl,-static' }
+addlf{ target_flags, '-Wl,-static', sf("-Wl,-Map=%s.map",output) }
 addaf{ target_flags }
 -- Toolset data
 tools.sim3u1xx = {}

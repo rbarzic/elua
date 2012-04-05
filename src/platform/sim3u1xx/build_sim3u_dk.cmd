@@ -1,7 +1,7 @@
 call c:\Silabs\Precision32_v1.0\IDE\Precision32Path.cmd
 @echo off
 pushd ..\..\..\
-lua build_elua.lua board=SIM3U1XX-B-DK toolchain=codered prog
+lua build_elua.lua board=SIM3U1XX-B-DK toolchain=codered allocator=multiple prog
 echo connect/prepare device to be flashed (hit enter when ready)
 pause
 

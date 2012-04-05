@@ -11,6 +11,12 @@
 #include "linenoise.h"
 #include <string.h>
 
+#ifdef USE_MULTIPLE_ALLOCATOR
+#include "dlmalloc.h"
+#else
+#include <malloc.h>
+#endif
+
 #if defined( USE_GIT_REVISION )
 #include "git_version.h"
 #else
@@ -27,6 +33,27 @@ static int elua_egc_setup( lua_State *L )
     memlimit = ( unsigned )luaL_checkinteger( L, 2 );
   legc_set_mode( L, mode, memlimit );
   return 0;
+}
+
+// Lua: elua.version()
+//static int elua_heapsize( lua_State *L )
+//{
+//  lua_pushinteger( L, malloc_max_footprint() );
+//  lua_pushinteger( L, malloc_footprint() );
+//  return 2;
+//}
+
+// Lua: heap, inuse = elua.heapstats()
+static int elua_heapstats( lua_State *L )
+{
+#ifdef USE_MULTIPLE_ALLOCATOR
+  struct mallinfo m = dlmallinfo();
+#else
+  struct mallinfo m = mallinfo();
+#endif
+  lua_pushinteger( L, m.arena ); // total space acquired through sbrk
+  lua_pushinteger( L, m.uordblks ); // in-use allocations
+  return 2;
 }
 
 // Lua: elua.version()
@@ -65,6 +92,7 @@ static int elua_save_history( lua_State *L )
 const LUA_REG_TYPE elua_map[] =
 {
   { LSTRKEY( "egc_setup" ), LFUNCVAL( elua_egc_setup ) },
+  { LSTRKEY( "heapstats" ), LFUNCVAL( elua_heapstats ) },
   { LSTRKEY( "version" ), LFUNCVAL( elua_version ) },
   { LSTRKEY( "save_history" ), LFUNCVAL( elua_save_history ) },
 #if LUA_OPTIMIZE_MEMORY > 0
