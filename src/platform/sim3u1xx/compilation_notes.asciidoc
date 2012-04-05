@@ -53,8 +53,8 @@ directory to generate elf and hex images:
 lua build_elua.lua board=SIM3U1XX-B-DK allocator=multiple prog
 ----
 
-Note on Git & Windows
----------------------
+Note on Git and Windows
+-----------------------
 
 The batch file mentioned above may need to have Windows/DOS line
 endings to execute correctly.  These should be set automatically by
@@ -63,6 +63,7 @@ git if the checkout is done with the recommended autocrlf option:
 ----
 git config --global core.autocrlf true
 ----
+
 
 
 Port Notes
@@ -86,8 +87,31 @@ heap,inuse = elua.heapstats()
 
 *inuse*: bytes for current allocations within heap
 
+
+Flashing
+--------
+
+In order to flash images using the Si32FlashUtility, it is currently
+necessary to convert output hex files to use "extended linear
+addressing" rather than "extended segment addressing" as is done
+automatically by objtool.  The hex file can be converted using the
+following command provided by
+link:http://srecord.sourceforge.net/[srecord].
+
+----
+srec_cat elua_lua_sim3u167.hex -Intel -Output elua_lua_sim3u167_lin.hex -Intel
+----
+
+The default output mode for srecord's hex format is the extended
+linear mode even though both output and input files are specified as
+being in the same format.
+
 Change Notes
 ------------
+
+2012-04-05:
+
+* add note on converting hex files
 
 2012-04-04:
 
