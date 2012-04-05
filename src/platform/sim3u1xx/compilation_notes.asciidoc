@@ -50,7 +50,7 @@ On other platforms, the following should work from the base eLua
 directory to generate elf and hex images:
 
 ----
-lua build_elua.lua board=SIM3U1XX-B-DK prog
+lua build_elua.lua board=SIM3U1XX-B-DK allocator=multiple prog
 ----
 
 Note on Git & Windows
