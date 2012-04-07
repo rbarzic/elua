@@ -349,7 +349,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     else
     {
       SI32_USART_A_select_tx_stop_bits( usart[ id ], SI32_USART_A_STOP_BITS_1_BIT );
-      SI32_USART_A_select_rx_stop_bits( usart[ id ], SI32_USART_A_STOP_BITS_2_BITS );
+      SI32_USART_A_select_rx_stop_bits( usart[ id ], SI32_USART_A_STOP_BITS_1_BIT );
     }
 
     // Set Parity
