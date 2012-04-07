@@ -378,7 +378,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_USART_A_disable_tx_signal_inversion( usart[ id ] );
     SI32_USART_A_disable_rx_signal_inversion( usart[ id ] );
 
-    SI32_USART_A_select_rx_fifo_threshold_1( usart[ id ] );
+    //SI32_USART_A_select_rx_fifo_threshold_1( usart[ id ] );
 
     // Enable RX & TX
     SI32_USART_A_enable_tx( usart[ id ] );
@@ -417,7 +417,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     else
     {
       SI32_UART_A_select_tx_stop_bits( uart[ id ], SI32_UART_A_STOP_BITS_1_BIT );
-      SI32_UART_A_select_rx_stop_bits( uart[ id ], SI32_UART_A_STOP_BITS_2_BITS );
+      SI32_UART_A_select_rx_stop_bits( uart[ id ], SI32_UART_A_STOP_BITS_1_BIT );
     }
 
     // Set Parity
@@ -446,7 +446,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_UART_A_disable_tx_signal_inversion( uart[ id ] );
     SI32_UART_A_disable_rx_signal_inversion( uart[ id ] );
 
-    SI32_UART_A_select_rx_fifo_threshold_1( uart[ id ] );
+    //SI32_UART_A_select_rx_fifo_threshold_1( uart[ id ] );
 
     // Enable RX & TX
     SI32_UART_A_enable_tx( uart[ id ] );
