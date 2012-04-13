@@ -88,6 +88,22 @@ heap,inuse = elua.heapstats()
 *inuse*: bytes for current allocations within heap
 
 
+Power Management
+----------------
+
+A platform-specific module has been added for power management
+features.  Initial implementation allows for timed sleep:
+
+----
+sim3.pmu.sleep(seconds)
+----
+
+This attempts to put the MCU into PM3 as soon as this function is
+executed.  It will wake, and re-enable clocks after this time has
+elapsed.  Initial testing suggests that with the 5V USB rail as a
+power source, this yields ~1.6 mA of current draw during sleep.  It
+appears that this should be able to be lower.
+
 Flashing
 --------
 
@@ -108,6 +124,10 @@ being in the same format.
 
 Change Notes
 ------------
+
+2012-04-13:
+
+* add initial power management function
 
 2012-04-05:
 

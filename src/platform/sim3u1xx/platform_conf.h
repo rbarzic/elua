@@ -18,6 +18,8 @@
 //#define BUILD_ADC
 #define BUILD_RPC
 
+#define ENABLE_PMU
+
 #define PLATFORM_HAS_SYSTIMER
 
 // *****************************************************************************
@@ -49,7 +51,16 @@
 #endif
 
 // The name of the platform specific libs table
-//#define PS_LIB_TABLE_NAME   "sim3"
+#ifdef ENABLE_PMU
+#define PS_LIB_TABLE_NAME "sim3"
+#endif
+
+
+#ifdef PS_LIB_TABLE_NAME
+#define PLATLINE _ROM( PS_LIB_TABLE_NAME, luaopen_platform, platform_map )
+#else
+#define PLATLINE
+#endif
 
 #define LUA_PLATFORM_LIBS_ROM\
   _ROM( AUXLIB_PIO, luaopen_pio, pio_map )\
@@ -63,7 +74,8 @@
   _ROM( AUXLIB_CPU, luaopen_cpu, cpu_map )\
   RPCLINE\
   _ROM( LUA_MATHLIBNAME, luaopen_math, math_map )\
-  _ROM( AUXLIB_ELUA, luaopen_elua, elua_map )
+  _ROM( AUXLIB_ELUA, luaopen_elua, elua_map )\
+  PLATLINE
 
 // *****************************************************************************
 // Configuration data

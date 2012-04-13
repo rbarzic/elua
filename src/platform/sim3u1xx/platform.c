@@ -29,6 +29,7 @@
 // forward dcls
 static void pios_init();
 static void clk_init();
+static void rtc_init();
 
 void hard_fault_handler_c(unsigned int * hardfault_args)
 {
@@ -99,19 +100,22 @@ void mySystemInit(void)
 
 int platform_init()
 {
+  int i;
   SystemInit();
 
   // Configure the NVIC Preemption Priority Bits:
   // two (2) bits of preemption priority, six (6) bits of sub-priority.
   // Since the Number of Bits used for Priority Levels is five (5), so the
   // actual bit number of sub-priority is three (3)
-  NVIC_SetPriorityGrouping(0x05);
+  //NVIC_SetPriorityGrouping(0x05);
 
   // Setup peripherals
   // platform_setup_timers();
 
   // Peripheral Clocking setup
   clk_init();
+
+
 
   // GPIO setup
   pios_init();
@@ -124,6 +128,9 @@ int platform_init()
   SysTick_Config( cmsis_get_cpu_frequency() / SYSTICKHZ );
 
   NVIC_SetPriority(SysTick_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
+
+  // RTC Configuration
+  rtc_init();
 
   // Common platform initialization code
   cmn_platform_init();
@@ -161,9 +168,40 @@ void clk_init( void )
                                          SI32_CLKCTRL_A_APBCLKG0_USART1 |
                                          SI32_CLKCTRL_A_APBCLKG0_UART0 |
                                          SI32_CLKCTRL_A_APBCLKG0_UART1);
+  SI32_CLKCTRL_A_enable_apb_to_modules_1(SI32_CLKCTRL_0,
+                                         SI32_CLKCTRL_A_APBCLKG1_MISC1 |
+                                         SI32_CLKCTRL_A_APBCLKG1_MISC0);
 #endif
 }
+void RTC0ALRM_IRQHandler()
+{
+  if (SI32_RTC_A_is_alarm0_interrupt_pending(SI32_RTC_0))
+  {
+    SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
+    //printf("Alarm\n");
+  }
+}
 
+void rtc_init( void )
+{
+  SI32_RTC_A_enable_high_speed_mode(SI32_RTC_0);
+  // Low Frequency Oscillator Mode
+  SI32_RTC_A_enable_low_frequency_oscillator(SI32_RTC_0);
+  SI32_RTC_A_set_clock_source_lfo(SI32_RTC_0);
+  SI32_RTC_A_disable_crystal_oscillator(SI32_RTC_0);
+
+  SI32_RTC_A_enable_module(SI32_RTC_0);
+
+  SI32_RTC_A_start_timer(SI32_RTC_0);
+  SI32_RTC_A_enable_alarm0_auto_reset(SI32_RTC_0);
+  SI32_RTC_A_write_alarm0(SI32_RTC_0, 0xF000);
+  SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
+
+  SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
+
+  NVIC_ClearPendingIRQ(RTC0ALRM_IRQn);
+  NVIC_EnableIRQ(RTC0ALRM_IRQn);
+}
 
 extern u32 SystemCoreClock;
 u32 cmsis_get_cpu_frequency()
@@ -626,3 +664,82 @@ timer_data_type platform_timer_read_sys()
 {
   return cmn_systimer_get();
 }
+
+// ****************************************************************************
+// PMU functions
+void sim3_pmu_sleep( unsigned seconds )
+{
+  // GET CURRENT TIMER VALUE INTO SETCAP
+  SI32_RTC_A_start_timer_capture(SI32_RTC_0);
+  while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
+
+  // SET ALARM FOR now+s
+  // RTC running at 16.384Khz so there are 16384 cycles/sec)
+  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
+  SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
+  
+  // ENABLE INTERRUPTS
+  SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
+  
+  // Test Jumping Into PM3
+  __set_BASEPRI(0x40);
+
+  SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
+  SI32_CLKCTRL_A_exit_fast_wake_mode( SI32_CLKCTRL_0 );
+  SI32_RSTSRC_A_disable_power_mode_9( SI32_RSTSRC_0 );
+
+  // Turn off all peripheral clocks
+  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
+
+  // Switch VREG to low power mode
+  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+
+  __WFI();
+
+  __set_BASEPRI(0x00);
+  SI32_VREG_A_enable_band_gap( SI32_VREG_0 );
+  clk_init();
+}
+
+
+// ****************************************************************************
+// Platform specific modules go here
+
+#ifdef ENABLE_PMU
+
+#define MIN_OPT_LEVEL 2
+#include "lrodefs.h"
+extern const LUA_REG_TYPE pmu_map[];
+
+const LUA_REG_TYPE platform_map[] =
+{
+#if LUA_OPTIMIZE_MEMORY > 0
+  { LSTRKEY( "pmu" ), LROVAL( pmu_map ) },
+#endif
+  { LNILKEY, LNILVAL }
+};
+
+LUALIB_API int luaopen_platform( lua_State *L )
+{
+#if LUA_OPTIMIZE_MEMORY > 0
+  return 0;
+#else // #if LUA_OPTIMIZE_MEMORY > 0
+  luaL_register( L, PS_LIB_TABLE_NAME, platform_map );
+
+  // Setup the new tables inside platform table
+  lua_newtable( L );
+  luaL_register( L, NULL, pmu_map );
+  lua_setfield( L, -2, "pmu" );
+
+  return 1;
+#endif // #if LUA_OPTIMIZE_MEMORY > 0
+}
+
+#else // #ifdef ENABLE_PMU
+
+LUALIB_API int luaopen_platform( lua_State *L )
+{
+  return 0;
+}
+
+#endif // #ifdef ENABLE_PMU

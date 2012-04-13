@@ -5,7 +5,7 @@ addi( sf( 'src/platform/%s/si32Hal/sim3u1xx', platform ) )
 
 local fwlib_files = utils.get_files( sf( "src/platform/%s/si32Hal/SI32_Modules", platform ), ".*%.c$" )
 fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/si32Hal/sim3u1xx", platform ), ".*%.c$" )
-specific_files = "platform.c"
+specific_files = "platform.c pmu.c"
 
 local ldscript = "sim3u1xx.ld"
  
