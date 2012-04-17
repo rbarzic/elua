@@ -96,6 +96,7 @@ void mySystemInit(void)
   SI32_CLKCTRL_A_enable_apb_to_modules_0 (SI32_CLKCTRL_0, SI32_CLKCTRL_A_APBCLKG0_PB0CEN_MASK);
   // make the SWO pin (PB1.3) push-pull to enable SWV printf
   SI32_PBSTD_A_set_pins_push_pull_output (SI32_PBSTD_1, (1<<3));
+
 }
 
 int platform_init()
@@ -690,14 +691,25 @@ void sim3_pmu_sleep( unsigned seconds )
 
   // Turn off all peripheral clocks
   SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
+  SI32_EXTVREG_A_disable_module( SI32_EXTVREG_0 );
 
   // Switch VREG to low power mode
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
 
+  SI32_CLKCTRL_A_select_ahb_source_rtc_oscillator(SI32_CLKCTRL_0);
+
+  // Set system clock to AHB divider frequency
+  SystemCoreClock = 16384;
+
   __WFI();
+
+  SI32_CLKCTRL_A_select_ahb_source_low_power_oscillator(SI32_CLKCTRL_0);
+
+  SystemCoreClock = 20000000;
 
   __set_BASEPRI(0x00);
   SI32_VREG_A_enable_band_gap( SI32_VREG_0 );
+  SI32_EXTVREG_A_enable_module( SI32_EXTVREG_0 );
   clk_init();
 }
 
