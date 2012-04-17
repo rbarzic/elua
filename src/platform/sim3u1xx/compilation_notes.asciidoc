@@ -101,8 +101,8 @@ sim3.pmu.sleep(seconds)
 This attempts to put the MCU into PM3 as soon as this function is
 executed.  It will wake, and re-enable clocks after this time has
 elapsed.  Initial testing suggests that with the 5V USB rail as a
-power source, this yields ~1.08 mA of current draw during sleep.  It
-appears that this should be able to be lower.
+power source, this yields ~0.82 mA of current draw during sleep (0.89
+w/ JTAG connected.  It appears that this should be able to be lower.
 
 Flashing
 --------
@@ -127,7 +127,7 @@ Change Notes
 
 2012-04-16:
 
-* switch AHB clock to RTC, now down to 1.08 mA in PM3
+* switch AHB clock to RTC, now down to 0.82 mA in PM3 w/ no JTAG
 
 2012-04-13:
 

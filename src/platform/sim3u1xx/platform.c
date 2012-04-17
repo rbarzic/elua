@@ -682,24 +682,27 @@ void sim3_pmu_sleep( unsigned seconds )
   // ENABLE INTERRUPTS
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
   
+  // Turn off all peripheral clocks
+  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
+  //SI32_CLKCTRL_A_disable_ahb_to_all_modules( SI32_CLKCTRL_0);
+
+  //SI32_EXTVREG_A_disable_module( SI32_EXTVREG_0 );
+
+  // Switch VREG to low power mode
+  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+
+  // Switch AHB source to RTC oscillator
+  SI32_CLKCTRL_A_select_ahb_source_rtc_oscillator(SI32_CLKCTRL_0);
+  SystemCoreClock = 16384;
+
+  SI32_PMU_A_clear_wakeup_flags(SI32_PMU_0);
+
   // Test Jumping Into PM3
   __set_BASEPRI(0x40);
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
   SI32_CLKCTRL_A_exit_fast_wake_mode( SI32_CLKCTRL_0 );
   SI32_RSTSRC_A_disable_power_mode_9( SI32_RSTSRC_0 );
-
-  // Turn off all peripheral clocks
-  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
-  SI32_EXTVREG_A_disable_module( SI32_EXTVREG_0 );
-
-  // Switch VREG to low power mode
-  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
-
-  SI32_CLKCTRL_A_select_ahb_source_rtc_oscillator(SI32_CLKCTRL_0);
-
-  // Set system clock to AHB divider frequency
-  SystemCoreClock = 16384;
 
   __WFI();
 
