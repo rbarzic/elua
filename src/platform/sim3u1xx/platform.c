@@ -617,6 +617,11 @@ static void platform_setup_timers()
 
 }
 
+int platform_s_timer_set_match_int( unsigned id, timer_data_type period_us, int type )
+{
+    return PLATFORM_TIMER_INT_OK;
+}
+
 void platform_s_timer_delay( unsigned id, timer_data_type delay_us )
 {
 

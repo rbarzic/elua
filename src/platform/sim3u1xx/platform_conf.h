@@ -18,6 +18,9 @@
 //#define BUILD_ADC
 #define BUILD_RPC
 
+#define BUILD_C_INT_HANDLERS
+#define BUILD_LUA_INT_HANDLERS
+
 #define ENABLE_PMU
 
 #define PLATFORM_HAS_SYSTIMER
@@ -97,9 +100,8 @@
 
 
 // Enable RX buffering on UART
-// [TODO] make this happen
-//#define BUF_ENABLE_UART
-//#define CON_BUF_SIZE          BUF_SIZE_128
+#define BUF_ENABLE_UART
+#define CON_BUF_SIZE          BUF_SIZE_32
 
 // ADC Configuration Params
 // #define ADC_BIT_RESOLUTION    12
@@ -136,5 +138,15 @@ u32 cmsis_get_cpu_frequency();
 #define MEM_START_ADDRESS     { ( void* )end }
 #define MEM_END_ADDRESS       { ( void* )( SRAM_ORIGIN + SRAM_SIZE - STACK_SIZE_TOTAL - 1 ) }
  
+// Interrupt queue size
+#define PLATFORM_INT_QUEUE_LOG_SIZE 5
+
+// Interrupt list
+#define INT_UART_RX      ELUA_INT_FIRST_ID
+#define INT_ELUA_LAST         INT_UART_RX
+
+#define PLATFORM_CPU_CONSTANTS\
+  _C( INT_UART_RX )
+
 #endif // #ifndef __PLATFORM_CONF_H__
 
