@@ -21,6 +21,15 @@ static int pmu_sleep( lua_State *L )
   return 0;
 }
 
+//Lua: sleep(time)
+static int pmu_pm9( lua_State *L )
+{
+  unsigned seconds;
+  seconds = luaL_checkinteger( L, 1 );
+
+  sim3_pmu_pm9( seconds );
+  return 0;
+}
 
 
 #define MIN_OPT_LEVEL 2
@@ -30,6 +39,7 @@ static int pmu_sleep( lua_State *L )
 const LUA_REG_TYPE pmu_map[] =
 { 
   { LSTRKEY( "sleep" ),  LFUNCVAL( pmu_sleep ) },
+  { LSTRKEY( "pm9" ),  LFUNCVAL( pmu_pm9 ) },
   { LNILKEY, LNILVAL }
 };
 

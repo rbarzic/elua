@@ -116,7 +116,8 @@ int platform_init()
   // Peripheral Clocking setup
   clk_init();
 
-
+  SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
+  SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
 
   // GPIO setup
   pios_init();
@@ -684,43 +685,99 @@ void sim3_pmu_sleep( unsigned seconds )
   SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
   
-  // ENABLE INTERRUPTS
+  // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
   
   // Turn off all peripheral clocks
   SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
-  //SI32_CLKCTRL_A_disable_ahb_to_all_modules( SI32_CLKCTRL_0);
 
-  //SI32_EXTVREG_A_disable_module( SI32_EXTVREG_0 );
-
-  // Switch VREG to low power mode
-  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
-
-  // Switch AHB source to RTC oscillator
-  SI32_CLKCTRL_A_select_ahb_source_rtc_oscillator(SI32_CLKCTRL_0);
-  SystemCoreClock = 16384;
-
-  SI32_PMU_A_clear_wakeup_flags(SI32_PMU_0);
-
-  // Test Jumping Into PM3
+  // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
   SI32_CLKCTRL_A_exit_fast_wake_mode( SI32_CLKCTRL_0 );
   SI32_RSTSRC_A_disable_power_mode_9( SI32_RSTSRC_0 );
 
+  // Switch VREG to low power mode
+  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+
+  // Switch AHB source to LFO oscillator
+  SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
+
   __WFI();
 
   SI32_CLKCTRL_A_select_ahb_source_low_power_oscillator(SI32_CLKCTRL_0);
 
-  SystemCoreClock = 20000000;
-
+  // Allow all interrupts
   __set_BASEPRI(0x00);
+
+  // Re-enable clocks used at startup
+  clk_init();
+
   SI32_VREG_A_enable_band_gap( SI32_VREG_0 );
   SI32_EXTVREG_A_enable_module( SI32_EXTVREG_0 );
-  clk_init();
 }
 
+void sim3_pmu_pm9( unsigned seconds )
+{
+  // GET CURRENT TIMER VALUE INTO SETCAP
+  SI32_RTC_A_start_timer_capture(SI32_RTC_0);
+  while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
+
+  // SET ALARM FOR now+s
+  // RTC running at 16.384Khz so there are 16384 cycles/sec)
+  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
+  SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
+  
+  // Enable RTC alarm interrupt
+  SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
+  
+  // Turn off all peripheral clocks
+  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
+
+  // Mask low priority interrupts from waking us
+  __set_BASEPRI(0x40);
+
+  // DISABLE all wakeup sources
+  SI32_PMU_A_write_wakeen(SI32_PMU_0, 0x0);
+
+  // ENABLE RTC_Alarm as wake event
+  SI32_PMU_A_enable_rtc0_alarm_wake_event(SI32_PMU_0);
+
+  SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
+
+  // Switch VREG to low power mode
+  SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+
+  // CLEAR WAKUP SOURCES
+  SI32_PMU_A_clear_wakeup_flags(SI32_PMU_0);
+
+  SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
+  SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
+  //SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
+
+  // SET DEEPSLEEP in SCR (and service all pending interrutps before sleep
+  SCB->SCR = 0x14;
+
+  // Switch AHB source to RTC oscillator
+  SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
+
+  __WFI();
+
+  SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
+  SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
+
+  SI32_CLKCTRL_A_select_ahb_source_low_power_oscillator(SI32_CLKCTRL_0);
+
+  // Allow all interrupts
+  __set_BASEPRI(0x00);
+
+  // Re-enable clocks used at startup
+  clk_init();
+
+  SI32_VREG_A_enable_band_gap( SI32_VREG_0 );
+  SI32_EXTVREG_A_enable_module( SI32_EXTVREG_0 );
+}
 
 // ****************************************************************************
 // Platform specific modules go here

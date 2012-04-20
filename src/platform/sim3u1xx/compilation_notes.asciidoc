@@ -100,9 +100,14 @@ sim3.pmu.sleep(seconds)
 
 This attempts to put the MCU into PM3 as soon as this function is
 executed.  It will wake, and re-enable clocks after this time has
-elapsed.  Initial testing suggests that with the 5V USB rail as a
-power source, this yields ~0.82 mA of current draw during sleep (0.89
-w/ JTAG connected.  It appears that this should be able to be lower.
+elapsed. 
+
+Additionally a function for entering PM9, which causes a reset on wake
+has been added, with similar RTC/LFO timer-driven operation:
+
+----
+sim3.pmu.pm9(seconds)
+----
 
 Flashing
 --------
@@ -132,6 +137,14 @@ being in the same format.
 
 Change Notes
 ------------
+
+2012-04-19:
+
+* Initial support for PM9 followed by reset (currently only wakes due
+  to RTC alarm). 0.54 mA current consumption in this mode so far.
+
+* PM3 current consumption has gone up slightly (0.1 mA), should be
+  investigated
 
 2012-04-18:
 
