@@ -90,7 +90,7 @@
 #define VTMR_FREQ_HZ          4
 
 // Number of resources (0 if not available/not implemented)
-#define NUM_PIO               4
+#define NUM_PIO               5
 #define NUM_SPI               0
 #define NUM_UART              4
 #define NUM_PWM               0
@@ -127,7 +127,7 @@ u32 cmsis_get_cpu_frequency();
 // Use #define PIO_PINS_PER_PORT 0 if this isn't needed
 
 // SiM3U1x7 - Crossbar Ports (PB4 left off for now)
-#define PIO_PIN_ARRAY     { 16, 16, 15, 12 }
+#define PIO_PIN_ARRAY     { 16, 16, 15, 12, 6 }
 
 // Allocator data: define your free memory zones here in two arrays
 // (start address and end address)

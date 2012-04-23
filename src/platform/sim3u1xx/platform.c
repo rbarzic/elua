@@ -294,6 +294,16 @@ void pios_init( void )
   // BRING OUT UART
   SI32_PBCFG_A_enable_xbar0h_peripherals(SI32_PBCFG_0, SI32_PBCFG_A_XBAR0H_UART0EN);
 #endif
+
+  // Setup PBHD4
+  SI32_PBCFG_A_unlock_ports(SI32_PBCFG_0);
+  SI32_PBHD_A_write_pblock(SI32_PBHD_4, 0x00);
+
+  SI32_PBHD_A_enable_bias(SI32_PBHD_4);
+  SI32_PBHD_A_select_low_power_port_mode(SI32_PBHD_4);  //needs to be high power if VDDHD >3.6v
+  SI32_PBHD_A_select_slew_rate(SI32_PBHD_4, SI32_PBHD_A_SLEW_FASTEST);
+  SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
+  SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
 }
 
 
@@ -305,39 +315,66 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
   switch( op )
   {
     case PLATFORM_IO_PORT_SET_VALUE:
-      SI32_PBSTD_A_write_pins_masked( port_std[ port ], 0xFFFF, pinmask);
+      if( port < 4)
+        SI32_PBSTD_A_write_pins_masked( port_std[ port ], 0xFFFF, pinmask);
+      else
+        SI32_PBHD_A_write_pins_masked( SI32_PBHD_4, 0xFFFF, pinmask);
       break;
     
     case PLATFORM_IO_PIN_SET:
-      SI32_PBSTD_A_write_pins_high( port_std[ port ], pinmask );
+      if( port < 4)
+        SI32_PBSTD_A_write_pins_high( port_std[ port ], pinmask );
+      else
+        SI32_PBHD_A_write_pins_high( SI32_PBHD_4, pinmask );
       break;
     
     case PLATFORM_IO_PIN_CLEAR:
-      SI32_PBSTD_A_write_pins_low( port_std[ port ], pinmask );
+      if( port < 4)
+        SI32_PBSTD_A_write_pins_low( port_std[ port ], pinmask );
+      else
+        SI32_PBHD_A_write_pins_low( SI32_PBHD_4, pinmask );
       break;
     
     case PLATFORM_IO_PORT_DIR_OUTPUT:
-      SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], 0xFFFF );
+      if( port < 4 )
+        SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], 0xFFFF );
+      else
+        SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0xFFFF );
       break;    
 
     case PLATFORM_IO_PIN_DIR_OUTPUT:
-      SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], pinmask );
+      if( port < 4 )
+        SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], pinmask );
+      else
+        SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, pinmask );
       break;
     
     case PLATFORM_IO_PORT_DIR_INPUT:
-      SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], 0xFFFF );
+      if( port < 4 )
+        SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], 0xFFFF );
+      else
+        SI32_PBHD_A_set_pins_digital_input( SI32_PBHD_4, 0xFFFF );
       break;
 
     case PLATFORM_IO_PIN_DIR_INPUT:
-      SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], pinmask );
+      if( port < 4 )
+        SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], pinmask );
+      else
+        SI32_PBHD_A_set_pins_digital_input( SI32_PBHD_4, pinmask );
       break;    
           
     case PLATFORM_IO_PORT_GET_VALUE:
-      retval = SI32_PBSTD_A_read_pins(port_std[ port ]);
+      if( port < 4 )
+        retval = SI32_PBSTD_A_read_pins( port_std[ port ] );
+      else
+        retval = SI32_PBHD_A_read_pins( SI32_PBHD_4 );
       break;
     
     case PLATFORM_IO_PIN_GET:
-      retval = ( SI32_PBSTD_A_read_pins(port_std[ port ]) & pinmask ) ? 1 : 0;
+      if( port < 4 )
+        retval = ( SI32_PBSTD_A_read_pins(port_std[ port ]) & pinmask ) ? 1 : 0;
+      else
+        retval = ( SI32_PBHD_A_read_pins( SI32_PBHD_4 ) & pinmask ) ? 1 : 0;
       break;
     
     default:

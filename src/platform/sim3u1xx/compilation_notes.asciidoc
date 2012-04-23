@@ -138,6 +138,16 @@ being in the same format.
 Change Notes
 ------------
 
+2012-04-22:
+
+* Initial support for PBHD4 pins with the following defaults:
+** bias enabled
+** low power mode (VDDHD &lt; 3.6V)
+** slew rate set to fastest
+** low drive strength
+** drivers enabled
+
+
 2012-04-19:
 
 * Initial support for PM9 followed by reset (currently only wakes due
