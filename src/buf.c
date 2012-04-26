@@ -22,6 +22,8 @@
 #include "sermux.h"
 #include <stdlib.h>
 #include <string.h>
+#include "elua_int.h"
+#include "common.h"
 
 // [TODO]? Following code might need a C99 compiler (for 0-sized arrays)
 #ifdef BUF_ENABLE_UART
@@ -120,7 +122,8 @@ int buf_write( unsigned resid, unsigned resnum, t_buf_data *data )
   char* d = ( char* )( pbuf->buf + pbuf->wptr );
   
   if( pbuf->logsize == BUF_SIZE_NONE )
-    return PLATFORM_ERR;    
+    return PLATFORM_ERR;
+
   if( pbuf->count > BUF_REALSIZE( pbuf ) )
   {
     fprintf( stderr, "[ERROR] Buffer overflow on resid=%d, resnum=%d!\n", resid, resnum );
@@ -130,7 +133,19 @@ int buf_write( unsigned resid, unsigned resnum, t_buf_data *data )
   
   BUF_MOD_INCR( pbuf, wptr );
     pbuf->count ++;
-    
+
+#if defined( INT_UART_BUF_FULL )
+  if( ( pbuf->count == BUF_REALSIZE( pbuf ) ) && 
+      ( resid == BUF_ID_UART ) )
+    cmn_int_handler( INT_UART_BUF_FULL, resnum );
+#endif
+
+#if defined( INT_UART_BUF_MATCH )
+  if( ( ( *data == '\n' ) || ( *data == '\r' ) ) &&
+      ( resid == BUF_ID_UART ) )
+    cmn_int_handler( INT_UART_BUF_MATCH, resnum );
+#endif
+
   return PLATFORM_OK;
 }
 
