@@ -138,6 +138,20 @@ being in the same format.
 Change Notes
 ------------
 
+2012-04-26:
+
+* a simple example for how to create a module for reading from a UART
+  and triggering a function call when particular characters are added
+  to the buffer
+** look at gps.c for the example code, it prints to the main console
+   when a line ending is encountered
+** initialization function can be called as follows, where the
+   parameters are the same as uart.setup
+
+----
+=sim3.gps.init(2, 4800, 8, uart.PAR_NONE, uart.STOP_1)
+----
+
 2012-04-22:
 
 * Initial support for PBHD4 pins with the following defaults:

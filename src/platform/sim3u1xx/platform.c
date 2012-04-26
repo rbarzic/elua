@@ -268,10 +268,6 @@ void pios_init( void )
   // Enable Crossbar1 signals & set properties
   SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
 
-  // PB4 Setup
-  SI32_PBHD_A_write_pblock(SI32_PBHD_4, 0x0000);
-  SI32_PBHD_A_set_pins_analog(SI32_PBHD_4, 0x000C);
-
 #else
   // Set up prinf pin
   SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00000008);
@@ -716,6 +712,7 @@ timer_data_type platform_timer_read_sys()
 
 // ****************************************************************************
 // PMU functions
+
 void sim3_pmu_sleep( unsigned seconds )
 {
   // GET CURRENT TIMER VALUE INTO SETCAP
@@ -822,18 +819,51 @@ void sim3_pmu_pm9( unsigned seconds )
 }
 
 // ****************************************************************************
-// Platform specific modules go here
+// PBHD functions
 
-#ifdef ENABLE_PMU
+//  SI32_PBHD_A_select_low_power_port_mode(SI32_PBHD_4);  //needs to be high power if VDDHD >3.6v
+//  SI32_PBHD_A_select_slew_rate(SI32_PBHD_4, SI32_PBHD_A_SLEW_FASTEST);
+//  SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
+//  SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
+
+void sim3_pbhd_setbias( unsigned state )
+{
+  //  SI32_PBHD_A_enable_bias(SI32_PBHD_4)
+}
+
+void sim3_pbhd_setdrive( unsigned state )
+{
+
+}
+
+void sim3_pbhd_setslew( unsigned state )
+{
+
+}
+
+void sim3_pbhd_setdrivestrength( unsigned state, int pin )
+{
+
+}
+
+// ****************************************************************************
+// Platform specific modules go here
+#ifdef PS_LIB_TABLE_NAME
+
 
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
+#ifdef ENABLE_PMU
 extern const LUA_REG_TYPE pmu_map[];
+#endif
+
+extern const LUA_REG_TYPE gps_map[];
 
 const LUA_REG_TYPE platform_map[] =
 {
 #if LUA_OPTIMIZE_MEMORY > 0
   { LSTRKEY( "pmu" ), LROVAL( pmu_map ) },
+  { LSTRKEY( "gps" ), LROVAL( gps_map ) },
 #endif
   { LNILKEY, LNILVAL }
 };
@@ -849,6 +879,10 @@ LUALIB_API int luaopen_platform( lua_State *L )
   lua_newtable( L );
   luaL_register( L, NULL, pmu_map );
   lua_setfield( L, -2, "pmu" );
+
+  lua_newtable( L );
+  luaL_register( L, NULL, gps_map );
+  lua_setfield( L, -2, "gps" );
 
   return 1;
 #endif // #if LUA_OPTIMIZE_MEMORY > 0
