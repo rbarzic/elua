@@ -412,7 +412,7 @@ local uip_files = " " .. utils.prepend_path( "uip_arp.c uip.c uiplib.c dhcpc.c p
 
 addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', 'src/lua' }, { 'src/modules', 'src/platform/' .. platform }, "src/uip", "src/fatfs" }
 addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.optram and "2" or "0" ) )
-addcf( { '-Os','-fomit-frame-pointer' } )
+addcf( { '-Os','-fomit-frame-pointer'} )
 
 -- Toolset data (filled by each platform in part)
 tools = {}

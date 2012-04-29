@@ -24,6 +24,8 @@ addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,-
 addaf{ '-x', 'assembler-with-cpp', '-Wall' }
 addlib{ 'c','gcc','m' }
 
+addcf( { '-g'} )
+
 local target_flags = { '-mcpu=cortex-m3','-mthumb' }
 
 -- Configure general flags for target
