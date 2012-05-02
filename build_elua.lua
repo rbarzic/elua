@@ -220,6 +220,7 @@ builder:add_option( 'boot', 'boot mode, standard will boot to shell, luarpc boot
 builder:add_option( 'romfs', 'ROMFS compilation mode', 'verbatim', { 'verbatim' , 'compress', 'compile' } )
 builder:add_option( 'cpumode', 'ARM CPU compilation mode (only affects certain ARM targets)', nil, { 'arm', 'thumb' } )
 builder:add_option( 'bootloader', 'Build for bootloader usage (AVR32 only)', 'none', { 'none', 'emblod' } )
+builder:add_option( 'debug', 'Enable debug build', false )
 builder:init( args )
 builder:set_build_mode( builder.BUILD_DIR_LINEARIZED )
 
@@ -368,6 +369,7 @@ print( "Boot Mode:      ", comp.boot )
 print( "Target:         ", comp.target  )
 print( "Toolchain:      ", comp.toolchain )
 print( "ROMFS mode:     ", comp.romfs )
+print( "Debug:          ", comp.debug )
 print( "Version:        ", elua_vers )
 print "*********************************"
 print ""
@@ -413,6 +415,10 @@ local uip_files = " " .. utils.prepend_path( "uip_arp.c uip.c uiplib.c dhcpc.c p
 addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', 'src/lua' }, { 'src/modules', 'src/platform/' .. platform }, "src/uip", "src/fatfs" }
 addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.optram and "2" or "0" ) )
 addcf( { '-Os','-fomit-frame-pointer'} )
+
+if comp.debug == true then
+   addcf( { '-g'} )
+end
 
 -- Toolset data (filled by each platform in part)
 tools = {}
