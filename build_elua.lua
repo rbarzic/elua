@@ -221,6 +221,7 @@ builder:add_option( 'romfs', 'ROMFS compilation mode', 'verbatim', { 'verbatim' 
 builder:add_option( 'cpumode', 'ARM CPU compilation mode (only affects certain ARM targets)', nil, { 'arm', 'thumb' } )
 builder:add_option( 'bootloader', 'Build for bootloader usage (AVR32 only)', 'none', { 'none', 'emblod' } )
 builder:add_option( 'debug', 'Enable debug build', false )
+builder:add_option( 'extras', 'Path to directory containing build extras', '' )
 builder:init( args )
 builder:set_build_mode( builder.BUILD_DIR_LINEARIZED )
 
@@ -370,6 +371,9 @@ print( "Target:         ", comp.target  )
 print( "Toolchain:      ", comp.toolchain )
 print( "ROMFS mode:     ", comp.romfs )
 print( "Debug:          ", comp.debug )
+if comp.extras ~= '' then
+  print( "Extras:         ", comp.extras )
+end
 print( "Version:        ", elua_vers )
 print "*********************************"
 print ""
@@ -423,12 +427,17 @@ end
 -- Toolset data (filled by each platform in part)
 tools = {}
 specific_files = ''
+extras_files = ''
 
 -- We get platform-specific data by executing the platform script
 dofile( sf( "src/platform/%s/conf.lua", platform ) )
 
+if comp.extras ~= '' then
+   dofile( sf( "%s/conf.lua", comp.extras ) )
+end
+
 -- Complete file list
-source_files = source_files .. uip_files .. specific_files
+source_files = source_files .. uip_files .. specific_files .. extras_files
 
 -------------------------------------------------------------------------------
 -- Create compiler/linker/assembler command lines and build
