@@ -800,11 +800,11 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
 
   SI32_I2C_A_clear_start( i2cs[ id ] );
   SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
-  SI32_I2C_A_write_data(  i2cs[ id ] , address | direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
+  SI32_I2C_A_write_data(  i2cs[ id ] , address<<1 | direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
   SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
   SI32_I2C_A_arm_tx( i2cs[ id ] );
   
-  while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0);
+  //while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0);
 
   SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
   // Clear start interrupt?

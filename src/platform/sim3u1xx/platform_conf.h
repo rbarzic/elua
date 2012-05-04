@@ -69,6 +69,7 @@
   _ROM( AUXLIB_PIO, luaopen_pio, pio_map )\
   _ROM( AUXLIB_UART, luaopen_uart, uart_map )\
   _ROM( AUXLIB_PD, luaopen_pd, pd_map )\
+  _ROM( AUXLIB_I2C, luaopen_i2c, i2c_map )\
   _ROM( AUXLIB_TMR, luaopen_tmr, tmr_map )\
   ADCLINE\
   _ROM( AUXLIB_TERM, luaopen_term, term_map )\
@@ -94,6 +95,7 @@
 #define NUM_SPI               0
 #define NUM_UART              4
 #define NUM_PWM               0
+#define NUM_I2C               2
 #define NUM_ADC               0
 #define NUM_CAN               0
 #define NUM_TIMER             1
