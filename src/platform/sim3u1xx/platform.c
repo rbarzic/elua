@@ -740,6 +740,122 @@ timer_data_type platform_timer_read_sys()
 }
 
 // ****************************************************************************
+// I2C support
+
+#if NUM_I2C > 0
+
+static const SI32_I2C_A_Type* i2cs[] = { SI32_I2C_0, SI32_I2C_1 };
+
+#define  I2C_WRITE          0x00           // I2C WRITE command
+#define  I2C_READ           0x01           // I2C READ command
+
+u32 platform_i2c_setup( unsigned id, u32 speed )
+{
+  SI32_I2C_A_set_scaler_value( i2cs[ id ], ( cmsis_get_cpu_frequency() / speed ) );
+
+  SI32_I2C_A_set_scl_low_period_reload( i2cs[ id ], 0xE8);
+  SI32_I2C_A_set_timer1_reload( i2cs[ id ], 0xF1);
+
+  // configure bus free timeouts
+  SI32_I2C_A_set_timer0_u8 ( i2cs[ id ], 0x00);
+  SI32_I2C_A_set_timer0_reload ( i2cs[ id ], 0x01);
+
+  // configure SCL low timeouts
+  // configures the device for a 25 ms SCL low timeout
+  SI32_I2C_A_set_timer2_reload( i2cs[ id ], 0x00);
+  SI32_I2C_A_set_timer3_reload( i2cs[ id ], 0x7B);
+
+  // set SETUP time to non-zero value for repeated starts to function correctly
+  SI32_I2C_A_set_extended_data_setup_time(SI32_I2C_0, 0x01);
+
+  // ENABLE MODULE
+  SI32_I2C_A_enable_module( i2cs[ id ] );
+
+  // Return actual speed
+  return SI32_I2C_A_get_scaler_value( i2cs[ id ] ) / speed;
+}
+
+void platform_i2c_send_start( unsigned id )
+{
+  // The master write operation starts with firmware setting the STA bit to generate a start condition.
+  SI32_I2C_A_set_start( i2cs[ id ] );
+
+  //while( SI32_I2C_A_is_master_mode_enabled( i2cs[ id ] ) != SUCCESS );
+}
+
+void platform_i2c_send_stop( unsigned id )
+{
+  SI32_I2C_A_set_stop( i2cs[ id ] );
+  SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+
+  //while( SI32_I2C_A_is_busy( i2cs[ id ] ) );
+}
+
+int platform_i2c_send_address( unsigned id, u16 address, int direction )
+{
+  u8 acktmp;
+  // The ISR or firmware routine should then clear the start bit (STA),
+  // set the targeted slave address and the R/W direction bit in the DATA
+  // register, set the byte count, arm the transmission (TXARM = 1), and
+  // clear the start interrupt.
+
+  SI32_I2C_A_clear_start( i2cs[ id ] );
+  SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
+  SI32_I2C_A_write_data(  i2cs[ id ] , TARGET| direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
+  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
+  SI32_I2C_A_arm_tx( i2cs[ id ] );
+  
+  while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0);
+
+  SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
+  // Clear start interrupt?
+  
+  acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
+
+  if( direction == PLATFORM_I2C_DIRECTION_RECEIVER )
+  {
+    SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
+    SI32_I2C_A_arm_rx( i2cs[ id ] );
+    SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+  }
+
+  return acktmp;
+}
+
+int platform_i2c_send_byte( unsigned id, u8 data )
+{
+  u32 tmpdata = ( u32 )data;
+  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1 );
+  SI32_I2C_A_write_data( i2cs[ id ], DATA_temp );
+  SI32_I2C_A_arm_tx( i2cs[ id ] );
+  SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+  return 1;
+}
+
+int platform_i2c_recv_byte( unsigned id, int ack )
+{
+  u32 tmpdata;
+  if( ack )
+    SI32_I2C_A_send_nack( i2cs[ id ] );
+  else
+    SI32_I2C_A_send_nack( i2cs[ id ] );
+
+  SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
+
+  tmpdata = SI32_I2C_A_read_data( i2cs[ id ] );
+  if( 0xFFFFFF00 & tmpdata )
+    printf("GOT MORE THAN ONE BYTE!\n");
+
+  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
+  SI32_I2C_A_arm_rx( i2cs[ id ] );
+  SI32_I2C_A_clear_rx_interrupt( i2cs[ id ] );
+
+  return ( u8 )tmpdata;
+}
+
+#endif // NUM_I2C > 0
+
+// ****************************************************************************
 // PMU functions
 
 void sim3_pmu_sleep( unsigned seconds )
