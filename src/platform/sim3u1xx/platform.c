@@ -743,8 +743,7 @@ timer_data_type platform_timer_read_sys()
 // I2C support
 
 #if NUM_I2C > 0
-
-static const SI32_I2C_A_Type* i2cs[] = { SI32_I2C_0, SI32_I2C_1 };
+static SI32_I2C_A_Type* const i2cs[] = { SI32_I2C_0, SI32_I2C_1 };
 
 #define  I2C_WRITE          0x00           // I2C WRITE command
 #define  I2C_READ           0x01           // I2C READ command
@@ -801,7 +800,7 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
 
   SI32_I2C_A_clear_start( i2cs[ id ] );
   SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
-  SI32_I2C_A_write_data(  i2cs[ id ] , TARGET| direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
+  SI32_I2C_A_write_data(  i2cs[ id ] , address | direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
   SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
   SI32_I2C_A_arm_tx( i2cs[ id ] );
   
@@ -826,7 +825,7 @@ int platform_i2c_send_byte( unsigned id, u8 data )
 {
   u32 tmpdata = ( u32 )data;
   SI32_I2C_A_set_byte_count( i2cs[ id ] , 1 );
-  SI32_I2C_A_write_data( i2cs[ id ], DATA_temp );
+  SI32_I2C_A_write_data( i2cs[ id ], tmpdata );
   SI32_I2C_A_arm_tx( i2cs[ id ] );
   SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
   return 1;
