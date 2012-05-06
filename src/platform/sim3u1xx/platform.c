@@ -95,7 +95,7 @@ void mySystemInit(void)
   // enable APB clock to the Port Bank module
   SI32_CLKCTRL_A_enable_apb_to_modules_0 (SI32_CLKCTRL_0, SI32_CLKCTRL_A_APBCLKG0_PB0CEN_MASK);
   // make the SWO pin (PB1.3) push-pull to enable SWV printf
-  SI32_PBSTD_A_set_pins_push_pull_output (SI32_PBSTD_1, (1<<3));
+  //SI32_PBSTD_A_set_pins_push_pull_output (SI32_PBSTD_1, (1<<3));
 
 }
 
@@ -299,7 +299,7 @@ void pios_init( void )
 
 #else
   // Set up prinf pin
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00000008);
+  //SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00000008);
 
   SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
   SI32_PBCFG_A_enable_crossbar_0(SI32_PBCFG_0);
@@ -743,6 +743,7 @@ timer_data_type platform_timer_read_sys()
 // I2C support
 
 #if NUM_I2C > 0
+
 static SI32_I2C_A_Type* const i2cs[] = { SI32_I2C_0, SI32_I2C_1 };
 
 #define  I2C_WRITE          0x00           // I2C WRITE command
@@ -752,18 +753,6 @@ u32 platform_i2c_setup( unsigned id, u32 speed )
 {
   SI32_I2C_A_set_scaler_value( i2cs[ id ], ( cmsis_get_cpu_frequency() / speed ) );
 
-  SI32_I2C_A_set_scl_low_period_reload( i2cs[ id ], 0xE8);
-  SI32_I2C_A_set_timer1_reload( i2cs[ id ], 0xF1);
-
-  // configure bus free timeouts
-  SI32_I2C_A_set_timer0_u8 ( i2cs[ id ], 0x00);
-  SI32_I2C_A_set_timer0_reload ( i2cs[ id ], 0x01);
-
-  // configure SCL low timeouts
-  // configures the device for a 25 ms SCL low timeout
-  SI32_I2C_A_set_timer2_reload( i2cs[ id ], 0x00);
-  SI32_I2C_A_set_timer3_reload( i2cs[ id ], 0x7B);
-
   // set SETUP time to non-zero value for repeated starts to function correctly
   SI32_I2C_A_set_extended_data_setup_time(SI32_I2C_0, 0x01);
 
@@ -771,51 +760,85 @@ u32 platform_i2c_setup( unsigned id, u32 speed )
   SI32_I2C_A_enable_module( i2cs[ id ] );
 
   // Return actual speed
-  return SI32_I2C_A_get_scaler_value( i2cs[ id ] ) / speed;
+  return cmsis_get_cpu_frequency() / SI32_I2C_A_get_scaler_value( i2cs[ id ] );
 }
 
 void platform_i2c_send_start( unsigned id )
 {
   // The master write operation starts with firmware setting the STA bit to generate a start condition.
   SI32_I2C_A_set_start( i2cs[ id ] );
-
-  //while( SI32_I2C_A_is_master_mode_enabled( i2cs[ id ] ) != SUCCESS );
+  printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
 }
 
 void platform_i2c_send_stop( unsigned id )
 {
-  SI32_I2C_A_set_stop( i2cs[ id ] );
-  SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+  if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
+  {
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
 
-  //while( SI32_I2C_A_is_busy( i2cs[ id ] ) );
+    if( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) )
+      SI32_I2C_A_clear_tx_interrupt ( i2cs[ id ] );
+
+    if( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) )
+      SI32_I2C_A_clear_rx_interrupt ( i2cs[ id ] );
+
+    SI32_I2C_A_set_stop( i2cs[ id ] );
+
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+
+    while( SI32_I2C_A_is_stop_interrupt_pending( i2cs[ id ] ) == 0 );
+
+    SI32_I2C_A_clear_stop( i2cs[ id ] );
+    SI32_I2C_A_send_nack ( i2cs[ id ] );
+    SI32_I2C_A_clear_stop_interrupt( i2cs[ id ] );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+  }
+  else
+  {
+    printf("send_stop: not active\n");
+  }
 }
 
 int platform_i2c_send_address( unsigned id, u16 address, int direction )
 {
-  u8 acktmp;
+  u8 acktmp = 0;
   // The ISR or firmware routine should then clear the start bit (STA),
   // set the targeted slave address and the R/W direction bit in the DATA
   // register, set the byte count, arm the transmission (TXARM = 1), and
   // clear the start interrupt.
-
-  SI32_I2C_A_clear_start( i2cs[ id ] );
-  SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
-  SI32_I2C_A_write_data(  i2cs[ id ] , address<<1 | direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ );
-  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
-  SI32_I2C_A_arm_tx( i2cs[ id ] );
-  
-  //while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0);
-
-  SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
-  // Clear start interrupt?
-  
-  acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
-
-  if( direction == PLATFORM_I2C_DIRECTION_RECEIVER )
+  if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
   {
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
+
+    //SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
     SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
-    SI32_I2C_A_arm_rx( i2cs[ id ] );
-    SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+    SI32_I2C_A_write_data( i2cs[ id ] , ( address << 1 ) | (direction == PLATFORM_I2C_DIRECTION_TRANSMITTER ?  I2C_WRITE : I2C_READ) );
+    SI32_I2C_A_arm_tx( i2cs[ id ] );
+
+    SI32_I2C_A_clear_start( i2cs[ id ] );
+    SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
+    SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
+  
+    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
+    acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
+    //while( SI32_I2C_A_is_ack_interrupt_pending( i2cs[ id ] ) == 0 );
+
+    //acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
+
+    SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
+
+    if( direction == PLATFORM_I2C_DIRECTION_RECEIVER )
+    {
+      SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
+      SI32_I2C_A_arm_rx( i2cs[ id ] );
+      SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+    }
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+  }
+  else
+  {
+    printf("send_addr: not active\n");
   }
 
   return acktmp;
@@ -823,33 +846,68 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
 
 int platform_i2c_send_byte( unsigned id, u8 data )
 {
-  u32 tmpdata = ( u32 )data;
-  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1 );
-  SI32_I2C_A_write_data( i2cs[ id ], tmpdata );
-  SI32_I2C_A_arm_tx( i2cs[ id ] );
-  SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
-  return 1;
+  if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
+  {
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    u32 tmpdata = ( u32 )data;
+    SI32_I2C_A_set_byte_count( i2cs[ id ] , 1 );
+    SI32_I2C_A_write_data( i2cs[ id ], tmpdata );
+    SI32_I2C_A_arm_tx( i2cs[ id ] );
+    SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
+
+    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
+    //while( SI32_I2C_A_is_ack_interrupt_pending( i2cs[ id ] ) == 0 );
+    
+    SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
+
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    if( SI32_I2C_A_is_ack_received(SI32_I2C_0) )
+      return 1;
+    else
+      return 0;
+  }
+  else
+  {
+    printf("send_byte: not active\n");
+    return 0;
+  }
 }
 
 int platform_i2c_recv_byte( unsigned id, int ack )
 {
   u32 tmpdata;
-  if( ack )
-    SI32_I2C_A_send_nack( i2cs[ id ] );
+  if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
+  {
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    if( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) )
+    {
+      if( ack )
+        SI32_I2C_A_send_ack( i2cs[ id ] );
+      else
+        SI32_I2C_A_send_nack( i2cs[ id ] );
+
+      SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
+
+      tmpdata = SI32_I2C_A_read_data( i2cs[ id ] );
+      if( 0xFFFFFF00 & tmpdata )
+        printf("GOT MORE THAN ONE BYTE!\n");
+
+      SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
+      SI32_I2C_A_arm_rx( i2cs[ id ] );
+      SI32_I2C_A_clear_rx_interrupt( i2cs[ id ] );
+
+      printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+
+      return ( u8 )tmpdata;
+    }
+    else
+      return 0;
+  }
   else
-    SI32_I2C_A_send_nack( i2cs[ id ] );
-
-  SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
-
-  tmpdata = SI32_I2C_A_read_data( i2cs[ id ] );
-  if( 0xFFFFFF00 & tmpdata )
-    printf("GOT MORE THAN ONE BYTE!\n");
-
-  SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
-  SI32_I2C_A_arm_rx( i2cs[ id ] );
-  SI32_I2C_A_clear_rx_interrupt( i2cs[ id ] );
-
-  return ( u8 )tmpdata;
+  {
+    printf("recv_byte: not active\n");
+    return -1;
+  }
 }
 
 #endif // NUM_I2C > 0
