@@ -772,6 +772,12 @@ void platform_i2c_send_start( unsigned id )
 
   SI32_I2C_A_set_start( i2cs[ id ] );
 
+  if( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) )
+    SI32_I2C_A_clear_tx_interrupt ( i2cs[ id ] );
+
+  if( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) )
+    SI32_I2C_A_clear_rx_interrupt ( i2cs[ id ] );
+
   while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
 #if defined( DEBUG_I2C )
   printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
