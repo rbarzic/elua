@@ -968,10 +968,12 @@ void sim3_pmu_sleep( unsigned seconds )
   
   // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
-  
-  // Turn off all peripheral clocks
-  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
 
+  // Disable Crossbar Peripheral Connections
+  SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
+  SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
+  SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
+  
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
 
@@ -981,9 +983,14 @@ void sim3_pmu_sleep( unsigned seconds )
 
   // Switch VREG to low power mode
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+  SI32_VREG_A_enter_suspend_mode( SI32_VREG_0 );
+  SI32_VREG_A_enable_vbus_invalid_interrupt( SI32_VREG_0 );
 
   // Switch AHB source to LFO oscillator
   SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
+
+  // Turn off all peripheral clocks
+  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
 
   __WFI();
 
@@ -994,6 +1001,7 @@ void sim3_pmu_sleep( unsigned seconds )
 
   // Re-enable clocks used at startup
   clk_init();
+  pios_init();
 
   SI32_VREG_A_enable_band_gap( SI32_VREG_0 );
   SI32_EXTVREG_A_enable_module( SI32_EXTVREG_0 );
@@ -1017,7 +1025,6 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
   
-
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
 
@@ -1054,6 +1061,8 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
 
   __WFI();
+
+  // We should never actually get here...
 
   SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
   SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
