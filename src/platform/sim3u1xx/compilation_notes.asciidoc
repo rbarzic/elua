@@ -139,19 +139,24 @@ Change Notes
 ------------
 
 2012-05-09:
+
 * PM9 sleep mode down to 50-60 &#956;A (from 540 &#956;A) with JTAG disconnected
 * PM3 sleep mode down to 280 &#956;A (from 1 mA) with JTAG disconnected
 
 2012-05-08:
+
 * fix for i2c repeated start
 
 2012-05-06:
+
 * first working i2c
 
 2012-05-02:
+
 * added build options for "extras" and debug builds
 
 2012-05-01:
+
 * fix for system timer to prevent reading timer remainder from a
   different cycle than system timer counter
 
