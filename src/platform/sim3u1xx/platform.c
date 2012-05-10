@@ -1012,9 +1012,11 @@ void sim3_pmu_pm9( unsigned seconds )
   
   // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
+
+  SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
+  SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
+  SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
   
-  // Turn off all peripheral clocks
-  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
 
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
@@ -1029,6 +1031,11 @@ void sim3_pmu_pm9( unsigned seconds )
 
   // Switch VREG to low power mode
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
+  SI32_VREG_A_enter_suspend_mode( SI32_VREG_0 );
+  SI32_VREG_A_enable_vbus_invalid_interrupt( SI32_VREG_0 );
+
+  // Disable VDD Monitor
+  SI32_VMON_A_disable_vdd_supply_monitor(SI32_VMON_0);
 
   // CLEAR WAKUP SOURCES
   SI32_PMU_A_clear_wakeup_flags(SI32_PMU_0);
@@ -1036,6 +1043,9 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
   SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
   //SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
+
+  // Turn off all peripheral clocks
+  SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
 
   // SET DEEPSLEEP in SCR (and service all pending interrutps before sleep
   SCB->SCR = 0x14;
