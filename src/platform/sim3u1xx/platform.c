@@ -969,7 +969,7 @@ void sim3_pmu_sleep( unsigned seconds )
   // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
 
-  // Disable Crossbar Peripheral Connections
+  // Disable crossbar peripheral connections
   SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
   SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
@@ -985,6 +985,9 @@ void sim3_pmu_sleep( unsigned seconds )
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
   SI32_VREG_A_enter_suspend_mode( SI32_VREG_0 );
   SI32_VREG_A_enable_vbus_invalid_interrupt( SI32_VREG_0 );
+
+  // Disable VDD Monitor
+  SI32_VMON_A_disable_vdd_supply_monitor(SI32_VMON_0);
 
   // Switch AHB source to LFO oscillator
   SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
@@ -1021,6 +1024,7 @@ void sim3_pmu_pm9( unsigned seconds )
   // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
 
+  // Disable crossbar peripheral connections
   SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
   SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);

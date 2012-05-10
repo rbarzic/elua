@@ -141,7 +141,7 @@ Change Notes
 2012-05-09:
 
 * PM9 sleep mode down to 50-60 &#956;A (from 540 &#956;A) with JTAG disconnected
-* PM3 sleep mode down to 280 &#956;A (from 1 mA) with JTAG disconnected
+* PM3 sleep mode down to 260 &#956;A (from 1 mA) with JTAG disconnected
 
 2012-05-08:
 
