@@ -970,9 +970,9 @@ void sim3_pmu_sleep( unsigned seconds )
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
 
   // Disable crossbar peripheral connections
-  SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
-  SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
-  SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
   
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
@@ -1025,9 +1025,9 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
 
   // Disable crossbar peripheral connections
-  SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
-  SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
-  SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
+  //SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
   
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
