@@ -234,37 +234,37 @@ static SI32_PBSTD_A_Type* const port_std[] = { SI32_PBSTD_0, SI32_PBSTD_1, SI32_
 void pios_init( void )
 {
 #if defined( ELUA_BOARD_GSBRD )
+  // SI32_PBCFG_A_unlock_ports(SI32_PBCFG_0);
+
+  // // PB0 Setup
+  // SI32_PBSTD_A_set_pins_analog(SI32_PBSTD_0, 0x0603);
+  // SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_0, 0x1114);
+  // SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_0, 0x37FB);
+
+  // // PB1 Setup
+  // SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00A1);
+  // SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_1, 0xFC1C);
+
+  // // Enable Crossbar0 signals & set properties
+  // SI32_PBCFG_A_enable_xbar0h_peripherals(SI32_PBCFG_0,
+  //                                        SI32_PBCFG_A_XBAR0H_UART0EN |
+  //                                        SI32_PBCFG_A_XBAR0H_UART1EN);
+  // SI32_PBCFG_A_enable_xbar0l_peripherals(SI32_PBCFG_0,
+  //                                        SI32_PBCFG_A_XBAR0L_USART0EN |
+  //                                        SI32_PBCFG_A_XBAR0L_I2C0EN);
+  // SI32_PBCFG_A_enable_crossbar_0(SI32_PBCFG_0);
+
+  // // PB2 Setup
+  // SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_2, 0x7FFF);
+
+  // // PB3 Setup
+  // SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_3, 0x00FF);
+
+  // // Enable Crossbar1 signals & set properties
+  // SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
+
+
   SI32_PBCFG_A_unlock_ports(SI32_PBCFG_0);
-
-  // PB0 Setup
-  SI32_PBSTD_A_set_pins_analog(SI32_PBSTD_0, 0x0603);
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_0, 0x1114);
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_0, 0x37FB);
-
-  // PB1 Setup
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x00A1);
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_1, 0xFC1C);
-
-  // Enable Crossbar0 signals & set properties
-  SI32_PBCFG_A_enable_xbar0h_peripherals(SI32_PBCFG_0,
-                                         SI32_PBCFG_A_XBAR0H_UART0EN |
-                                         SI32_PBCFG_A_XBAR0H_UART1EN);
-  SI32_PBCFG_A_enable_xbar0l_peripherals(SI32_PBCFG_0,
-                                         SI32_PBCFG_A_XBAR0L_USART0EN |
-                                         SI32_PBCFG_A_XBAR0L_I2C0EN);
-  SI32_PBCFG_A_enable_crossbar_0(SI32_PBCFG_0);
-
-  // PB2 Setup
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_2, 0x7FFF);
-
-  // PB3 Setup
-  SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_3, 0x00FF);
-
-  // Enable Crossbar1 signals & set properties
-  SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
-
-
-  /*  SI32_PBCFG_A_unlock_ports(SI32_PBCFG_0);
 
   // PB0 Setup
   SI32_PBSTD_A_set_pins_analog(SI32_PBSTD_0, 0x0603);
@@ -295,7 +295,7 @@ void pios_init( void )
   SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_3, 0x00FF);
 
   // Enable Crossbar1 signals & set properties
-  SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);*/
+  SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
 
 #else
   // Set up prinf pin
