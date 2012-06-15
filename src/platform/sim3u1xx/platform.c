@@ -135,6 +135,8 @@ int platform_init()
   rtc_init();
 
 #if defined( ELUA_BOARD_GSBRD )
+    platform_pio_op( 0, ( ( u32 ) 1 << 10 ), PLATFORM_IO_PIN_DIR_OUTPUT );
+    platform_pio_op( 0, ( ( u32 ) 1 << 10 ), PLATFORM_IO_PIN_SET );
     platform_pio_op( 3, ( ( u32 ) 1 << 11 ), PLATFORM_IO_PIN_DIR_OUTPUT );
     platform_pio_op( 3, ( ( u32 ) 1 << 11 ), PLATFORM_IO_PIN_SET );
 #endif
