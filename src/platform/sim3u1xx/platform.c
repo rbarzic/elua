@@ -327,9 +327,9 @@ void pios_init( void )
   SI32_PBHD_A_write_pblock(SI32_PBHD_4, 0x00);
 
   SI32_PBHD_A_enable_bias(SI32_PBHD_4);
-  SI32_PBHD_A_select_low_power_port_mode(SI32_PBHD_4);  //needs to be high power if VDDHD >3.6v
+  //SI32_PBHD_A_select_low_power_port_mode(SI32_PBHD_4);  //needs to be high power if VDDHD >3.6v
   SI32_PBHD_A_select_slew_rate(SI32_PBHD_4, SI32_PBHD_A_SLEW_FASTEST);
-  SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
+  //SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
   SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
 }
 
