@@ -326,14 +326,37 @@ void pios_init( void )
   SI32_PBCFG_A_unlock_ports(SI32_PBCFG_0);
   SI32_PBHD_A_write_pblock(SI32_PBHD_4, 0x00);
 
-  SI32_PBHD_A_select_nchannel_current_limit(SI32_PBHD_4, 15);
-  SI32_PBHD_A_select_pchannel_current_limit(SI32_PBHD_4, 15);
+  SI32_PBHD_A_select_pin0_safe_state(SI32_PBHD_4, 0x0);
+  SI32_PBHD_A_select_pin1_safe_state(SI32_PBHD_4, 0x0);
+  SI32_PBHD_A_select_pin2_safe_state(SI32_PBHD_4, 0x0);
+  SI32_PBHD_A_select_pin3_safe_state(SI32_PBHD_4, 0x0);
+  SI32_PBHD_A_select_pin4_safe_state(SI32_PBHD_4, 0x0);
+  SI32_PBHD_A_select_pin5_safe_state(SI32_PBHD_4, 0x0);
+
   SI32_PBHD_A_enable_bias(SI32_PBHD_4);
-  //SI32_PBHD_A_select_low_power_port_mode(SI32_PBHD_4);  //needs to be high power if VDDHD >3.6v
-  SI32_PBHD_A_select_slew_rate(SI32_PBHD_4, SI32_PBHD_A_SLEW_FASTEST);
-  //SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
-  SI32_PBHD_A_set_pins_high_drive_strength(SI32_PBHD_4, 0x3F);
+  SI32_PBHD_A_select_normal_power_port_mode(SI32_PBHD_4);
   SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
+
+  SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
+
+  //SI32_PBHD_A_select_nchannel_current_limit(SI32_PBHD_4, 0xA);
+  SI32_PBHD_A_select_pchannel_current_limit(SI32_PBHD_4, 0xF);
+  SI32_PBHD_A_enable_pin_current_limit( SI32_PBHD_4, 0x3F );
+
+  SI32_PBHD_A_select_slew_rate(SI32_PBHD_4, SI32_PBHD_A_SLEW_FASTEST);
+
+  // SI32_PBHD_A_select_pchannel_current_limit(SI32_PBHD_4, 0);
+  // SI32_PBHD_A_enable_pin_current_limit( SI32_PBHD_4, 0x3F );
+
+  // SI32_PBHD_A_write_pblock(SI32_PBHD_4, 0x0000);
+  // SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
+  // SI32_PBHD_A_select_pchannel_current_limit(SI32_PBHD_4, 15);
+  // SI32_PBHD_A_select_nchannel_current_limit(SI32_PBHD_4, 15);
+  // SI32_PBHD_A_set_pins_push_pull_output(SI32_PBHD_4, 0x003F);
+  // SI32_PBHD_A_set_pins_high_drive_strength(SI32_PBHD_4, 0x003F);
+  // SI32_PBHD_A_enable_n_channel_drivers(SI32_PBHD_4, 0x003F);
+  // SI32_PBHD_A_enable_p_channel_drivers(SI32_PBHD_4, 0x003F);
+  // SI32_PBHD_A_enable_pin_current_limit(SI32_PBHD_4, 0x003F);
 }
 
 
@@ -370,6 +393,7 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
         SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], 0xFFFF );
       else
         SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0xFFFF );
+        //SI32_PBHD_A_enable_p_channel_drivers( SI32_PBHD_4, 0xFFFF );
       break;    
 
     case PLATFORM_IO_PIN_DIR_OUTPUT:
@@ -377,6 +401,7 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
         SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], pinmask );
       else
         SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, pinmask );
+        //SI32_PBHD_A_enable_p_channel_drivers( SI32_PBHD_4, pinmask );
       break;
     
     case PLATFORM_IO_PORT_DIR_INPUT:
