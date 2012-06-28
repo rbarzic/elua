@@ -1042,6 +1042,7 @@ void sim3_pmu_sleep( unsigned seconds )
 
 void sim3_pmu_pm9( unsigned seconds )
 {
+  u8 i;
   // GET CURRENT TIMER VALUE INTO SETCAP
   SI32_RTC_A_start_timer_capture(SI32_RTC_0);
   while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
@@ -1058,6 +1059,10 @@ void sim3_pmu_pm9( unsigned seconds )
   //SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
   //SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   //SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
+
+  // Disable pullups
+  for( i=0; i<4; i++)
+    SI32_PBSTD_A_disable_pullup_resistors( port_std[ i ] );
   
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
