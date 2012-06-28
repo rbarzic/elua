@@ -1060,7 +1060,8 @@ void sim3_pmu_pm9( unsigned seconds )
   //SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   //SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
 
-  // Disable pullups
+  // Set pins as digital inputs, disable pullups and set pins low since
+  // SI32_PBSTD_A_set_pins_digital_input sets latch high
   for( i=0; i<4; i++)
   {
     SI32_PBSTD_A_set_pins_digital_input( port_std[ i ], 0xFFFF);
@@ -1068,11 +1069,13 @@ void sim3_pmu_pm9( unsigned seconds )
     SI32_PBSTD_A_write_pins_low( port_std[ i ], 0xFFFF );
   }
 
-  // Set I2C pins high
+  // Attempt to minimize current on I2C pins by enabling pullups again on
+  // PB0 & resetting pins as digital input (sets latch high)
   SI32_PBSTD_A_enable_pullup_resistors( port_std[ 0 ] );
   SI32_PBSTD_A_set_pins_digital_input( port_std[ 0 ], 0x6000);
 
-
+  // Prep PBHD for PM9 and set up as digital inputs as done with
+  // PBSTD ports.
   SI32_PBHD_A_disable_bias( SI32_PBHD_4 );
   SI32_PBHD_A_disable_pin_current_limit( SI32_PBHD_4, 0x3F );
   SI32_PBHD_A_set_pins_digital_input( SI32_PBHD_4, 0x3F );
