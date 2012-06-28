@@ -1069,9 +1069,9 @@ void sim3_pmu_pm9( unsigned seconds )
   }
 
   // Set I2C pins high
-  //SI32_PBSTD_A_enable_pullup_resistors( port_std[ 0 ] );
-  SI32_PBSTD_A_set_pins_push_pull_output( port_std[ 0 ], 0x6000 );
-  SI32_PBSTD_A_write_pins_high( port_std[ 0 ], 0x6000 );
+  SI32_PBSTD_A_enable_pullup_resistors( port_std[ 0 ] );
+  SI32_PBSTD_A_set_pins_digital_input( port_std[ 0 ], 0x6000);
+
 
   SI32_PBHD_A_disable_bias( SI32_PBHD_4 );
   SI32_PBHD_A_disable_pin_current_limit( SI32_PBHD_4, 0x3F );
