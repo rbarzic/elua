@@ -10,12 +10,19 @@ if comp.extras == '' then
    specific_files = specific_files .. " gps.c"
 end
 
-local ldscript = "sim3u1xx.ld"
+-- Choose ldscript according to choice of bootloader
+if comp.bootloader == 'none' then
+  print "Compiling with standard offset"
+  ldscript = sf( "src/platform/%s/%s.ld", platform, comp.cpu:lower() )
+else
+  print "Compiling for FreakUSB bootloader"
+  ldscript = sf( "src/platform/%s/%s_%s.ld", platform, comp.cpu:lower(), comp.bootloader )
+end
+
  
 -- Prepend with path
 specific_files = fwlib_files .. " " .. utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
 specific_files = specific_files .. " src/platform/cortex_utils.s src/platform/arm_cortex_interrupts.c"
-ldscript = sf( "src/platform/%s/%s", platform, ldscript )
 
 addm{ "FOR" .. comp.cpu:upper(), 'gcc', 'CORTEX_M3' }
 
@@ -37,7 +44,7 @@ addaf{ target_flags }
 tools.sim3u1xx = {}
 
 -- Array of file names that will be checked against the 'prog' target; their absence will force a rebuild
-tools.sim3u1xx.prog_flist = { output .. ".hex" }
+tools.sim3u1xx.prog_flist = { output .. ".hex", output .. ".bin" }
 
 -- We use 'gcc' as the assembler
 toolset.asm = toolset.compile
