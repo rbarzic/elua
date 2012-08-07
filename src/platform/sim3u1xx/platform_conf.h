@@ -33,7 +33,7 @@
 #else
 #define CON_UART_ID           0
 #endif
-#define CON_UART_SPEED        115200
+#define CON_UART_SPEED        38400
 #define TERM_LINES            25
 #define TERM_COLS             80
 

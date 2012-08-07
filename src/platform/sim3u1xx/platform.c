@@ -116,6 +116,9 @@ int platform_init()
   // Peripheral Clocking setup
   clk_init();
 
+  //Set flash read speed to slow
+  SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
+
   SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
   SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
 
@@ -150,6 +153,11 @@ int platform_init()
 
 void clk_init( void )
 {
+
+  SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
+
+  // Set system clock to AHB divider frequency
+  SystemCoreClock = 2500000;
 #if defined( ELUA_BOARD_GSBRD )
   SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG0_PB0 |
