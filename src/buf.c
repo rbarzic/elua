@@ -141,7 +141,7 @@ int buf_write( unsigned resid, unsigned resnum, t_buf_data *data )
 #endif
 
 #if defined( INT_UART_BUF_MATCH )
-  if( ( ( *data == '\n' ) || ( *data == '\r' ) ) &&
+  if( ( ( *data == '\n' ) ) &&
       ( resid == BUF_ID_UART ) )
     cmn_int_handler( INT_UART_BUF_MATCH, resnum );
 #endif

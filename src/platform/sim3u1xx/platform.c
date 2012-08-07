@@ -234,6 +234,11 @@ void SysTick_Handler()
 
   // Handle system timer call
   cmn_systimer_periodic();
+
+#if defined( INT_SYSTICK )
+    cmn_int_handler( INT_SYSTICK, 0 );
+#endif
+
 }
 
 // ****************************************************************************
@@ -523,7 +528,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_USART_A_disable_tx_signal_inversion( usart[ id ] );
     SI32_USART_A_disable_rx_signal_inversion( usart[ id ] );
 
-    //SI32_USART_A_select_rx_fifo_threshold_1( usart[ id ] );
+    //SI32_USART_A_select_rx_fifo_threshold_2( usart[ id ] );
 
     // Enable RX & TX
     SI32_USART_A_enable_tx( usart[ id ] );
@@ -591,7 +596,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_UART_A_disable_tx_signal_inversion( uart[ id ] );
     SI32_UART_A_disable_rx_signal_inversion( uart[ id ] );
 
-    //SI32_UART_A_select_rx_fifo_threshold_1( uart[ id ] );
+    //SI32_UART_A_select_rx_fifo_threshold_2( uart[ id ] );
 
     // Enable RX & TX
     SI32_UART_A_enable_tx( uart[ id ] );
