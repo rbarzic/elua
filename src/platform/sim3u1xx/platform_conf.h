@@ -144,6 +144,7 @@ u32 cmsis_get_cpu_frequency();
 #ifdef ELUA_CPU_SIM3U167
 #define INTERNAL_FLASH_SIZE             ( 256 * 1024 )
 #define INTERNAL_FLASH_SECTOR_SIZE      1024
+#define INTERNAL_FLASH_WRITE_UNIT_SIZE  4
 #define INTERNAL_FLASH_START_ADDRESS    0x00000000
 #define BUILD_WOFS
 #endif // #ifdef ELUA_CPU_SIM3U167

@@ -1217,17 +1217,13 @@ u8 flash_erase( u32 address, u8 verify)
         for( wc = INTERNAL_FLASH_SECTOR_SIZE/4; wc != 0; wc-- )
         {
             if ( *verify_address != 0xFFFFFFFF )
-            {
-                printf("BAILE!\n");
                 return 1;
-            }
 
             verify_address++;
         }
     }
 
     //hw_intp_enable();
-    printf("YAYE!\n");
 
     return 0;
 }
@@ -1276,7 +1272,6 @@ u8 flash_write( u32 address, u32* data, u32 count, u8 verify )
         {
             if (*verify_address != *tmpdata++)
             {
-                printf("BAILW! %d, %d, %d\n", wc, address, *verify_address, *(tmpdata-1));
                 return 1;
             }
 
@@ -1284,7 +1279,6 @@ u8 flash_write( u32 address, u32* data, u32 count, u8 verify )
         }
     }
 
-    printf("YAYW!\n");
     // re-enable interrupts
     //hw_intp_enable();
 
@@ -1294,12 +1288,13 @@ u8 flash_write( u32 address, u32* data, u32 count, u8 verify )
 
 u32 platform_s_flash_write( const void *from, u32 toaddr, u32 size )
 {
-  printf("W: %d, %d\n",toaddr,size);
+  flash_key_mask = 0x01;
   return flash_write( toaddr, ( u32 * )from, (size + (4 - 1))/4, 1 );
 }
 
 int platform_flash_erase_sector( u32 sector_id )
 {
+  flash_key_mask = 0x01;
   return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
 }
 
