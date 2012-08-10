@@ -123,28 +123,27 @@ function mkfs( dirname, outname, flist, mode, compcmd )
         end
         _add_data( 0, outfile ) -- ASCIIZ
         local plen = string.pack( "<i", #filedata )
+         -- Round to a multiple of 'alignment'
+        while _bytecnt % alignment ~= 0 do
+          _add_data( 0, outfile )
+        end
+        -- Write size
         _add_data( plen:byte( 1 ), outfile )
         _add_data( plen:byte( 2 ), outfile )
         _add_data( plen:byte( 3 ), outfile )
         _add_data( plen:byte( 4 ), outfile )
-        -- Round to a multiple of 'alignment'
-        local actual = #filedata
-        while _bytecnt % alignment ~= 0 do
-          _add_data( 0, outfile )
-          actual = actual + 1
-        end
-        -- Then write the rest of the file
+       -- Then write the rest of the file
         for i = 1, #filedata do
           _add_data( filedata:byte( i ), outfile )
         end
         -- Report
-        print( sf( "Encoded file %s (%d bytes real size, %d bytes after rounding, %d bytes total)", fname, #filedata, actual, _fcnt ) )
+        print( sf( "Encoded file %s (%d bytes real size, %d bytes encoded size)", fname, #filedata, _fcnt ) )
       end
     end
   end
     
-  -- All done, write the final "0" (terminator)
-  _add_data( 0, outfile, false )
+  -- All done, write the final "0xFF" (terminator)
+  _add_data( 0xFF, outfile, false )
   outfile:write( "};\n\n#endif\n" );
   outfile:close()
   print( sf( "Done, total size is %d bytes", _bytecnt ) )
