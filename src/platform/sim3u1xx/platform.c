@@ -144,6 +144,15 @@ int platform_init()
     platform_pio_op( 3, ( ( u32 ) 1 << 11 ), PLATFORM_IO_PIN_SET );
 #endif
 
+  usb_init();
+  hw_init();
+
+  // init the class driver here
+  cdc_init();
+
+  // register the rx handler function with the cdc
+  cdc_reg_rx_handler(rx);
+
   // Common platform initialization code
   cmn_platform_init();
 
@@ -1102,7 +1111,8 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_PMU_A_write_wakeen(SI32_PMU_0, 0x0);
 
   // ENABLE RTC_Alarm as wake event
-  SI32_PMU_A_enable_rtc0_alarm_wake_event(SI32_PMU_0);
+  SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
+  SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
 
