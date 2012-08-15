@@ -1101,8 +1101,9 @@ void sim3_pmu_pm9( unsigned seconds )
   // DISABLE all wakeup sources
   SI32_PMU_A_write_wakeen(SI32_PMU_0, 0x0);
 
-  // ENABLE RTC_Alarm as wake event
+  // ENABLE RTC_Alarm * RESET pin as wake events
   SI32_PMU_A_enable_rtc0_alarm_wake_event(SI32_PMU_0);
+  SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
 
