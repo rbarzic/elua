@@ -21,6 +21,11 @@
 #include "sim3u1xx.h"
 #include "sim3u1xx_Types.h"
 
+// FreakUSB
+#include "cdc.h"
+#include "freakusb.h"
+#include "hw.h"
+
 #define SYSTICKHZ             100
 
 // ****************************************************************************
@@ -117,7 +122,7 @@ int platform_init()
   clk_init();
 
   //Set flash read speed to slow
-  SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
+  //SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
 
   SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
   SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
@@ -144,6 +149,7 @@ int platform_init()
     platform_pio_op( 3, ( ( u32 ) 1 << 11 ), PLATFORM_IO_PIN_SET );
 #endif
 
+#if defined( BUILD_USB_CDC )
   usb_init();
   hw_init();
 
@@ -151,7 +157,8 @@ int platform_init()
   cdc_init();
 
   // register the rx handler function with the cdc
-  cdc_reg_rx_handler(rx);
+  //cdc_reg_rx_handler(NULL);
+#endif
 
   // Common platform initialization code
   cmn_platform_init();
@@ -163,10 +170,10 @@ int platform_init()
 void clk_init( void )
 {
 
-  SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
+  //SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
 
   // Set system clock to AHB divider frequency
-  SystemCoreClock = 2500000;
+  //SystemCoreClock = 2500000;
 #if defined( ELUA_BOARD_GSBRD )
   SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG0_PB0 |
@@ -243,6 +250,8 @@ void SysTick_Handler()
 
   // Handle system timer call
   cmn_systimer_periodic();
+
+  usb_poll();
 
 #if defined( INT_SYSTICK )
     cmn_int_handler( INT_SYSTICK, 0 );
@@ -1308,7 +1317,45 @@ int platform_flash_erase_sector( u32 sector_id )
   return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
 }
 
+// ****************************************************************************
+// USB functions
 
+#if defined( BUILD_USB_CDC )
+
+
+void platform_usb_cdc_send( u8 data )
+{
+    usb_pcb_t *pcb = usb_pcb_get();
+    
+    if (!(pcb->flags & (1<<ENUMERATED)))
+    {
+        return;
+    }
+
+    usb_buf_write(EP_1, (U8)data);
+    ep_write(EP_1);
+}
+
+int platform_usb_cdc_recv( s32 timeout )
+{
+  u8 data = 0;
+  usb_pcb_t *pcb = usb_pcb_get();
+
+  if (!(pcb->flags & (1<<ENUMERATED)))
+      return -1;
+
+  do {
+    if( pcb->fifo[EP_3].len > 0 )
+      data = usb_buf_read(EP_3);
+  } while( data == 0 && timeout != 0 );
+
+  if( data == 0 )
+    return -1;
+  else
+    return data;
+}
+
+#endif
 
 // ****************************************************************************
 // Platform specific modules go here

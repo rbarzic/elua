@@ -9,6 +9,17 @@ In order to compile for this platform, it is currently necessary to copy the
 ("sim3u1xx"). This is necessary until licensing is less restrictive on these
 components.
 
+Submodules
+----------
+
+Make sure to run the following commands from the top level eLua folder in
+order to pull in requisite submodules:
+
+----
+git submodule init
+git submodule update
+----
+
 General Build Requirements
 --------------------------
 
