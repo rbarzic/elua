@@ -6,9 +6,6 @@ addi( sf( 'src/platform/%s/si32Hal/sim3u1xx', platform ) )
 local fwlib_files = utils.get_files( sf( "src/platform/%s/si32Hal/SI32_Modules", platform ), ".*%.c$" )
 fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/si32Hal/sim3u1xx", platform ), ".*%.c$" )
 specific_files = "platform.c platform_int.c pmu.c"
-if comp.extras == '' then
-   specific_files = specific_files .. " gps.c"
-end
 
 -- Choose ldscript according to choice of bootloader
 if comp.bootloader == 'none' then
@@ -19,7 +16,7 @@ else
   ldscript = sf( "src/platform/%s/%s_%s.ld", platform, comp.cpu:lower(), comp.bootloader )
 end
 
- 
+
 -- Prepend with path
 specific_files = fwlib_files .. " " .. utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
 specific_files = specific_files .. " src/platform/cortex_utils.s src/platform/arm_cortex_interrupts.c"
