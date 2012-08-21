@@ -20,6 +20,7 @@
 
 #define BUILD_C_INT_HANDLERS
 #define BUILD_LUA_INT_HANDLERS
+#define BUILD_USB_CDC
 
 #define ENABLE_PMU
 
@@ -28,11 +29,12 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-#if defined( ELUA_BOARD_SIM3U1XXBDK )
-#define CON_UART_ID           2
-#else
-#define CON_UART_ID           0
-#endif
+// #if defined( ELUA_BOARD_SIM3U1XXBDK )
+// #define CON_UART_ID           2
+// #else
+// #define CON_UART_ID           0
+// #endif
+#define CON_UART_ID         CDC_UART_ID
 #define CON_UART_SPEED        38400
 #define TERM_LINES            25
 #define TERM_COLS             80
