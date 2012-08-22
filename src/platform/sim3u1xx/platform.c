@@ -21,6 +21,11 @@
 #include "sim3u1xx.h"
 #include "sim3u1xx_Types.h"
 
+// FreakUSB
+#include "cdc.h"
+#include "freakusb.h"
+#include "hw.h"
+
 #define SYSTICKHZ             100
 
 // ****************************************************************************
@@ -117,7 +122,7 @@ int platform_init()
   clk_init();
 
   //Set flash read speed to slow
-  SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
+  //SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
 
   SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
   SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
@@ -144,6 +149,17 @@ int platform_init()
     platform_pio_op( 3, ( ( u32 ) 1 << 11 ), PLATFORM_IO_PIN_SET );
 #endif
 
+#if defined( BUILD_USB_CDC )
+  usb_init();
+  hw_init();
+
+  // init the class driver here
+  cdc_init();
+
+  // register the rx handler function with the cdc
+  //cdc_reg_rx_handler(NULL);
+#endif
+
   // Common platform initialization code
   cmn_platform_init();
 
@@ -154,10 +170,10 @@ int platform_init()
 void clk_init( void )
 {
 
-  SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
+  //SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
 
   // Set system clock to AHB divider frequency
-  SystemCoreClock = 2500000;
+  //SystemCoreClock = 2500000;
 #if defined( ELUA_BOARD_GSBRD )
   SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG0_PB0 |
@@ -234,6 +250,8 @@ void SysTick_Handler()
 
   // Handle system timer call
   cmn_systimer_periodic();
+
+  usb_poll();
 
 #if defined( INT_SYSTICK )
     cmn_int_handler( INT_SYSTICK, 0 );
@@ -823,7 +841,7 @@ void platform_i2c_send_start( unsigned id )
 
   while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
 #if defined( DEBUG_I2C )
-  printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+  printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 }
 
@@ -832,7 +850,7 @@ void platform_i2c_send_stop( unsigned id )
   if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
   {
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 
     if( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) )
@@ -843,7 +861,7 @@ void platform_i2c_send_stop( unsigned id )
 
     SI32_I2C_A_set_stop( i2cs[ id ] );
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 
     while( SI32_I2C_A_is_stop_interrupt_pending( i2cs[ id ] ) == 0 );
@@ -852,7 +870,7 @@ void platform_i2c_send_stop( unsigned id )
     SI32_I2C_A_send_nack ( i2cs[ id ] );
     SI32_I2C_A_clear_stop_interrupt( i2cs[ id ] );
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
   }
   else
@@ -873,7 +891,7 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
   if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
   {
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
     while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
 
@@ -898,7 +916,7 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
       SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
     }
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
   }
   else
@@ -916,7 +934,7 @@ int platform_i2c_send_byte( unsigned id, u8 data )
   if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
   {
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
     u32 tmpdata = ( u32 )data;
     SI32_I2C_A_set_byte_count( i2cs[ id ] , 1 );
@@ -929,7 +947,7 @@ int platform_i2c_send_byte( unsigned id, u8 data )
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
 
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
     if( SI32_I2C_A_is_ack_received(SI32_I2C_0) )
       return 1;
@@ -951,7 +969,7 @@ int platform_i2c_recv_byte( unsigned id, int ack )
   if ( SI32_I2C_A_is_busy( i2cs[ id ] ) )
   {
 #if defined( DEBUG_I2C )
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 
     SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
@@ -979,7 +997,7 @@ int platform_i2c_recv_byte( unsigned id, int ack )
     if( 0xFFFFFF00 & tmpdata )
       printf("GOT MORE THAN ONE BYTE!\n");
 
-    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.U32 );
+    printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 
       return ( u8 )tmpdata;
@@ -1101,8 +1119,9 @@ void sim3_pmu_pm9( unsigned seconds )
   // DISABLE all wakeup sources
   SI32_PMU_A_write_wakeen(SI32_PMU_0, 0x0);
 
-  // ENABLE RTC_Alarm as wake event
-  SI32_PMU_A_enable_rtc0_alarm_wake_event(SI32_PMU_0);
+  // ENABLE RTC_Alarm * RESET pin as wake events
+  SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
+  SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
 
@@ -1176,6 +1195,167 @@ void sim3_pbhd_setdrivestrength( unsigned state, int pin )
 {
 
 }
+
+// ****************************************************************************
+// Flash access functions
+
+volatile u8 flash_key_mask  = 0x00;
+volatile u8 armed_flash_key = 0x00;
+
+u8 flash_erase( u32 address, u8 verify)
+{
+    u32 wc;
+    u32* verify_address;
+    // Write the address of the Flash page to WRADDR
+    SI32_FLASHCTRL_A_write_wraddr( SI32_FLASHCTRL_0, address );
+    // Enter Flash Erase Mode
+    SI32_FLASHCTRL_A_enter_flash_erase_mode( SI32_FLASHCTRL_0 );
+
+    // Disable interrupts
+    //hw_intp_disable();
+
+    // Unlock the flash interface for a single access
+    armed_flash_key = flash_key_mask ^ 0xA4;
+    SI32_FLASHCTRL_A_write_flash_key(SI32_FLASHCTRL_0, armed_flash_key);
+    armed_flash_key = flash_key_mask ^ 0xF0;
+    SI32_FLASHCTRL_A_write_flash_key(SI32_FLASHCTRL_0, armed_flash_key);
+    armed_flash_key = 0;
+
+    // Write any value to initiate a page erase.
+    SI32_FLASHCTRL_A_write_wrdata(SI32_FLASHCTRL_0, 0xA5);
+
+    // Wait for flash operation to complete
+    while (SI32_FLASHCTRL_A_is_flash_busy(SI32_FLASHCTRL_0));
+
+    if( verify )
+    {
+
+        address &= ~(INTERNAL_FLASH_SECTOR_SIZE - 1); // Round down to nearest even page address
+        verify_address = (u32*)address;
+
+        for( wc = INTERNAL_FLASH_SECTOR_SIZE/4; wc != 0; wc-- )
+        {
+            if ( *verify_address != 0xFFFFFFFF )
+                return 1;
+
+            verify_address++;
+        }
+    }
+
+    //hw_intp_enable();
+
+    return 0;
+}
+
+
+u8 flash_write( u32 address, u32* data, u32 count, u8 verify )
+{
+    u32* tmpdata = data;
+    u32* verify_address;
+    u32 wc;
+
+    // Write the address of the Flash page to WRADDR
+    SI32_FLASHCTRL_A_write_wraddr( SI32_FLASHCTRL_0, address );
+    // Enter flash erase mode
+    SI32_FLASHCTRL_A_exit_flash_erase_mode(SI32_FLASHCTRL_0);
+
+    // disable interrupts
+    //hw_intp_disable();
+
+    // Unlock flash interface for multiple accesses
+    armed_flash_key = flash_key_mask ^ 0xA4;
+    SI32_FLASHCTRL_A_write_flash_key(SI32_FLASHCTRL_0, armed_flash_key);
+    armed_flash_key = flash_key_mask ^ 0xF3;
+    SI32_FLASHCTRL_A_write_flash_key(SI32_FLASHCTRL_0, armed_flash_key);
+    armed_flash_key = 0;
+
+    // Write word-sized
+    for( wc = count; wc != 0; wc-- )
+    {
+        SI32_FLASHCTRL_A_write_wrdata( SI32_FLASHCTRL_0, *data );
+        SI32_FLASHCTRL_A_write_wrdata( SI32_FLASHCTRL_0, *data >> 16 );
+        data++;
+    }
+
+    // Relock flash interface
+    SI32_FLASHCTRL_A_write_flash_key( SI32_FLASHCTRL_0, 0x5A );
+
+    // Wait for flash operation to complete
+    while( SI32_FLASHCTRL_A_is_flash_busy(SI32_FLASHCTRL_0 ) );
+
+    if( verify )
+    {
+        verify_address = (u32*)address;
+
+        for( wc = count; wc != 0; wc-- )
+        {
+            if (*verify_address != *tmpdata++)
+            {
+                return 1;
+            }
+
+            verify_address++;
+        }
+    }
+
+    // re-enable interrupts
+    //hw_intp_enable();
+
+    return 0;
+}
+
+
+u32 platform_s_flash_write( const void *from, u32 toaddr, u32 size )
+{
+  flash_key_mask = 0x01;
+  return flash_write( toaddr, ( u32 * )from, (size + (4 - 1))/4, 1 );
+}
+
+int platform_flash_erase_sector( u32 sector_id )
+{
+  flash_key_mask = 0x01;
+  return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
+}
+
+// ****************************************************************************
+// USB functions
+
+#if defined( BUILD_USB_CDC )
+
+
+void platform_usb_cdc_send( u8 data )
+{
+    usb_pcb_t *pcb = usb_pcb_get();
+    
+    if (!(pcb->flags & (1<<ENUMERATED)))
+    {
+        return;
+    }
+
+    usb_buf_write(EP_1, (U8)data);
+    ep_write(EP_1);
+}
+
+int platform_usb_cdc_recv( s32 timeout )
+{
+  u8 data = 0;
+  usb_pcb_t *pcb = usb_pcb_get();
+
+  if (!(pcb->flags & (1<<ENUMERATED)))
+      return -1;
+
+  do {
+    if( pcb->fifo[EP_3].len > 0 )
+      data = usb_buf_read(EP_3);
+  } while( data == 0 && timeout != 0 );
+
+  if( data == 0 )
+    return -1;
+  else
+    return data;
+}
+
+#endif
 
 // ****************************************************************************
 // Platform specific modules go here

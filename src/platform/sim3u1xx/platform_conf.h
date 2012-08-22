@@ -20,6 +20,7 @@
 
 #define BUILD_C_INT_HANDLERS
 #define BUILD_LUA_INT_HANDLERS
+#define BUILD_USB_CDC
 
 #define ENABLE_PMU
 
@@ -28,11 +29,12 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-#if defined( ELUA_BOARD_SIM3U1XXBDK )
-#define CON_UART_ID           2
-#else
-#define CON_UART_ID           0
-#endif
+// #if defined( ELUA_BOARD_SIM3U1XXBDK )
+// #define CON_UART_ID           2
+// #else
+// #define CON_UART_ID           0
+// #endif
+#define CON_UART_ID         CDC_UART_ID
 #define CON_UART_SPEED        38400
 #define TERM_LINES            25
 #define TERM_COLS             80
@@ -139,7 +141,16 @@ u32 cmsis_get_cpu_frequency();
 //#define SRAM2_SIZE            0x1000
 #define MEM_START_ADDRESS     { ( void* )end }
 #define MEM_END_ADDRESS       { ( void* )( SRAM_ORIGIN + SRAM_SIZE - STACK_SIZE_TOTAL - 1 ) }
- 
+
+// Flash data (only for STM32F103RE for now)
+#ifdef ELUA_CPU_SIM3U167
+#define INTERNAL_FLASH_SIZE             ( 256 * 1024 )
+#define INTERNAL_FLASH_SECTOR_SIZE      1024
+#define INTERNAL_FLASH_WRITE_UNIT_SIZE  4
+#define INTERNAL_FLASH_START_ADDRESS    0x00000000
+#define BUILD_WOFS
+#endif // #ifdef ELUA_CPU_SIM3U167
+
 // Interrupt queue size
 #define PLATFORM_INT_QUEUE_LOG_SIZE 5
 

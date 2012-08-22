@@ -1,10 +1,23 @@
 -- Configuration file for the sim3u1xx backend
 
+if utils.is_file(sf( "src/platform/%s/FreakUSB/class/CDC/cdc.c", platform )) ~= true then
+  print "ERROR: Missing FreakUSB submodule. Run the following commands from the eLua root:"
+  print "git submodule init"
+  print "git submodule update"
+  os.exit( -1 )
+end
+
 addi( sf( 'src/platform/%s/si32Hal/SI32_Modules', platform ) )
 addi( sf( 'src/platform/%s/si32Hal/sim3u1xx', platform ) )
+addi( sf( 'src/platform/%s/FreakUSB/class/CDC', platform ) )
+addi( sf( 'src/platform/%s/FreakUSB/usb', platform ) )
+addi( sf( 'src/platform/%s/FreakUSB/hw/sim3u1xx', platform ) )
 
 local fwlib_files = utils.get_files( sf( "src/platform/%s/si32Hal/SI32_Modules", platform ), ".*%.c$" )
 fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/si32Hal/sim3u1xx", platform ), ".*%.c$" )
+fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/FreakUSB/usb", platform ), ".*%.c$" )
+fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/FreakUSB/hw/sim3u1xx", platform ), ".*%.c$", 1 )
+fwlib_files = fwlib_files .. " " .. utils.get_files( sf( "src/platform/%s/FreakUSB/class/CDC", platform ), ".*%.c$" )
 specific_files = "platform.c platform_int.c pmu.c"
 
 -- Choose ldscript according to choice of bootloader
@@ -24,6 +37,7 @@ specific_files = specific_files .. " src/platform/cortex_utils.s src/platform/ar
 addm{ "FOR" .. comp.cpu:upper(), 'gcc', 'CORTEX_M3' }
 
 addm{ "__NEWLIB__" }
+addm{ "USE_CDC_CLASS" }
 
 -- Standard GCC flags
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall' }
