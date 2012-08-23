@@ -7,6 +7,7 @@
 #include "auxmods.h"
 #include "lrotable.h"
 #include <string.h>
+#include <stdlib.h>
 #include "param.h"
 
 #define _C( x ) { #x, x }
@@ -89,7 +90,7 @@ static int cpu_set_param( lua_State *L )
   u8 *svalue;
   u8 *name;
   
-  name = luaL_checkstring( L, 1 );
+  name = ( u8 * )luaL_checkstring( L, 1 );
   if( lua_isnumber( L, 2 ) )
   {
     nvalue = ( u32 )luaL_checkinteger( L, 2);
@@ -99,7 +100,7 @@ static int cpu_set_param( lua_State *L )
   }
   else if ( lua_isstring( L, 2 ) )
   {
-    svalue = luaL_checkstring( L, 2 );
+    svalue = ( u8 * )luaL_checkstring( L, 2 );
     if( set_param_string( name, svalue ) < 0 )
       luaL_error( L, "couldn't save string" );
   }
@@ -109,12 +110,11 @@ static int cpu_set_param( lua_State *L )
 // Lua: val = getparam( "param" )
 static int cpu_get_param( lua_State *L )
 {
-  u32 nvalue;
+  s32 nvalue;
   u8 *svalue;
   u8 *name;
-  s32 len;
 
-  name = luaL_checkstring( L, 1 );
+  name = ( u8 * )luaL_checkstring( L, 1 );
 
   switch( get_param_type( name ) )
   {
@@ -133,7 +133,7 @@ static int cpu_get_param( lua_State *L )
         luaL_error( L, "couldn't get string" );
       else
       {
-        lua_pushstring( L, svalue );
+        lua_pushstring( L, ( const char * )svalue );
         free(svalue);
         return 1;
       }
