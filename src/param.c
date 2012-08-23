@@ -63,7 +63,7 @@ int32_t get_param_type( uint8_t * name)
 // store 32-bit integer parameter
 int32_t set_param_s32( uint8_t * name, int32_t value )
 {
-    return set_param( name, PARAM_NUMBER, ( uint8_t * )&value, 4 );
+    return set_param( name, PARAM_INTEGER, ( uint8_t * )&value, 4 );
 }
 
 // get 32-bit integer parameter, return number of bytes read
@@ -72,7 +72,7 @@ int32_t get_param_s32( uint8_t * name, int32_t *value )
     uint8_t b[4];
     int32_t ret;
 
-    ret = get_param( name, PARAM_NUMBER, b, 4);
+    ret = get_param( name, PARAM_INTEGER, b, 4);
     
     if( ret < 0 )
         return ret;

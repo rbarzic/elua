@@ -118,7 +118,7 @@ static int cpu_get_param( lua_State *L )
 
   switch( get_param_type( name ) )
   {
-    case PARAM_NUMBER:
+    case PARAM_INTEGER:
       if( get_param_s32( name, &nvalue ) < 0 )
         luaL_error( L, "couldn't get number" );
       else
