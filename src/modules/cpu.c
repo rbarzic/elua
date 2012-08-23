@@ -6,7 +6,8 @@
 #include "platform.h"
 #include "auxmods.h"
 #include "lrotable.h"
-#include <string.h> 
+#include <string.h>
+#include "param.h"
 
 #define _C( x ) { #x, x }
 #include "platform_conf.h"
@@ -80,6 +81,70 @@ static int cpu_r8( lua_State *L )
   lua_pushnumber( L, ( lua_Number )( *( u8* )addr ) );  
   return 1;
 }
+
+// Lua: setparam( "param", value )
+static int cpu_set_param( lua_State *L )
+{
+  u32 nvalue;
+  u8 *svalue;
+  u8 *name;
+  
+  name = luaL_checkstring( L, 1 );
+  if( lua_isnumber( L, 2 ) )
+  {
+    nvalue = ( u32 )luaL_checkinteger( L, 2);
+    if( set_param_s32( name, nvalue ) < 0 )
+      luaL_error( L, "couldn't save number" );
+
+  }
+  else if ( lua_isstring( L, 2 ) )
+  {
+    svalue = luaL_checkstring( L, 2 );
+    if( set_param_string( name, svalue ) < 0 )
+      luaL_error( L, "couldn't save string" );
+  }
+  return 0;
+}
+
+// Lua: val = getparam( "param" )
+static int cpu_get_param( lua_State *L )
+{
+  u32 nvalue;
+  u8 *svalue;
+  u8 *name;
+  s32 len;
+
+  name = luaL_checkstring( L, 1 );
+
+  switch( get_param_type( name ) )
+  {
+    case PARAM_NUMBER:
+      if( get_param_s32( name, &nvalue ) < 0 )
+        luaL_error( L, "couldn't get number" );
+      else
+      {
+        lua_pushinteger( L, nvalue );
+        return 1;
+      }
+      break;
+    case PARAM_STRING:
+      svalue = ( u8 * )malloc( get_param_string_len( name ) + 1 );
+      if( get_param_string( name, svalue, get_param_string_len( name ) + 1 ) < 0 )
+        luaL_error( L, "couldn't get string" );
+      else
+      {
+        lua_pushstring( L, svalue );
+        free(svalue);
+        return 1;
+      }
+      break;
+    default:
+      luaL_error( L, "couldn't handle value type" );
+  }
+
+  return 0;
+}
+
 
 // Either disables or enables the given interrupt(s)
 static int cpuh_int_helper( lua_State *L, int mode )
@@ -253,6 +318,8 @@ const LUA_REG_TYPE cpu_map[] =
   { LSTRKEY( "cli" ), LFUNCVAL( cpu_cli ) },
   { LSTRKEY( "sei" ), LFUNCVAL( cpu_sei ) },
   { LSTRKEY( "clock" ), LFUNCVAL( cpu_clock ) },
+  { LSTRKEY( "setparam" ), LFUNCVAL( cpu_set_param ) },
+  { LSTRKEY( "getparam" ), LFUNCVAL( cpu_get_param ) },
 #ifdef BUILD_LUA_INT_HANDLERS
   { LSTRKEY( "set_int_handler" ), LFUNCVAL( cpu_set_int_handler ) },
   { LSTRKEY( "get_int_handler" ), LFUNCVAL( cpu_get_int_handler ) },
