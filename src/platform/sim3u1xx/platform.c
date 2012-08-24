@@ -1123,8 +1123,8 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
   SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
 
-  // Enable 3.6, 3.7 & 3.8 (WAKE.10-WAKE.12)
-  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1C00, 0x1C00 );
+  // Enable 3.8 (WAKE.12)
+  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1000, 0x1000 );
   SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
@@ -1133,16 +1133,17 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
   SI32_VREG_A_enter_suspend_mode( SI32_VREG_0 );
   //SI32_VREG_A_enable_vbus_invalid_interrupt( SI32_VREG_0 );
+  SI32_PMU_A_enable_pin_wake( SI32_PMU_0 );
 
   // Disable VDD Monitor
   SI32_VMON_A_disable_vdd_supply_monitor(SI32_VMON_0);
 
   // CLEAR WAKUP SOURCES
-  SI32_PMU_A_clear_wakeup_flags(SI32_PMU_0);
+  SI32_PMU_A_clear_wakeup_flags( SI32_PMU_0 );
 
   SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
   SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
-  //SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
+  SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
 
   // Turn off all peripheral clocks
   SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
