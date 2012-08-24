@@ -1123,6 +1123,10 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
   SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
 
+  // Enable 3.6, 3.7 & 3.8 (WAKE.10-WAKE.12)
+  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1C00, 0x1C00 );
+  SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
+
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
 
   // Switch VREG to low power mode
