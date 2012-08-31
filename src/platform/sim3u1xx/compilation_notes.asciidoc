@@ -131,6 +131,12 @@ has been added, with similar RTC/LFO timer-driven operation:
 sim3.pmu.pm9(seconds)
 ----
 
+In addition, a software reset can be initiated using the following command:
+
+----
+sim3.pmu.reboot()
+----
+
 Flashing
 --------
 
