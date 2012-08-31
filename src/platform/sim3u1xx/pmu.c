@@ -31,6 +31,13 @@ static int pmu_pm9( lua_State *L )
   return 0;
 }
 
+//Lua: sleep(time)
+static int pmu_reboot( lua_State *L )
+{
+  sim3_pmu_reboot();
+  return 0;
+}
+
 
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"  
@@ -40,6 +47,7 @@ const LUA_REG_TYPE pmu_map[] =
 { 
   { LSTRKEY( "sleep" ),  LFUNCVAL( pmu_sleep ) },
   { LSTRKEY( "pm9" ),  LFUNCVAL( pmu_pm9 ) },
+  { LSTRKEY( "reboot" ),  LFUNCVAL( pmu_reboot ) },
   { LNILKEY, LNILVAL }
 };
 
