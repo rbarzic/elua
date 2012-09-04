@@ -169,17 +169,23 @@ u32 cmsis_get_cpu_frequency();
 #define PLATFORM_INT_QUEUE_LOG_SIZE 5
 
 // Interrupt list
-#define INT_UART_RX        ELUA_INT_FIRST_ID
-#define INT_UART_BUF_FULL  ( ELUA_INT_FIRST_ID + 1 )
-#define INT_UART_BUF_MATCH ( ELUA_INT_FIRST_ID + 2 )
-#define INT_SYSTICK ( ELUA_INT_FIRST_ID + 3 )
-#define INT_ELUA_LAST      INT_SYSTICK
+#define INT_UART_RX          ELUA_INT_FIRST_ID
+#define INT_UART_BUF_FULL    ( ELUA_INT_FIRST_ID + 1 )
+#define INT_UART_BUF_MATCH   ( ELUA_INT_FIRST_ID + 2 )
+#define INT_SYSTICK          ( ELUA_INT_FIRST_ID + 3 )
+#define INT_IRIDIUM_SIGNAL   ( ELUA_INT_FIRST_ID + 4 )
+#define INT_IRIDIUM_TX_OK    ( ELUA_INT_FIRST_ID + 5 )
+#define INT_IRIDIUM_TX_FAIL  ( ELUA_INT_FIRST_ID + 6 )
+#define INT_ELUA_LAST        INT_IRIDIUM_TX_FAIL
 
 #define PLATFORM_CPU_CONSTANTS\
     _C( INT_UART_RX ),        \
     _C( INT_UART_BUF_FULL ),  \
     _C( INT_UART_BUF_MATCH ), \
-    _C( INT_SYSTICK )
+    _C( INT_SYSTICK ), \
+    _C( INT_IRIDIUM_SIGNAL ), \
+    _C( INT_IRIDIUM_TX_OK ), \
+    _C( INT_IRIDIUM_TX_FAIL )
 
 #endif // #ifndef __PLATFORM_CONF_H__
 

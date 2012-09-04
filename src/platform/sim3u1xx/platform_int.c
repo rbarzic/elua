@@ -192,6 +192,24 @@ static int int_systick_get_flag( elua_int_resnum resnum, int clear )
 }
 
 // ****************************************************************************
+// Interupt: For callbacks that aren't hardware interrupts
+
+static int callback_set_status( elua_int_resnum resnum, int status )
+{
+  return 1;
+}
+
+static int callback_get_status( elua_int_resnum resnum )
+{
+  return 1;
+}
+
+static int callback_get_flag( elua_int_resnum resnum, int clear )
+{
+  return 1;
+}
+
+// ****************************************************************************
 // Initialize interrupt subsystem
 
 
@@ -210,5 +228,8 @@ const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
   { int_uart_rx_set_status, int_uart_rx_get_status, int_uart_rx_get_flag },
   { int_uart_buf_full_set_status, int_uart_buf_full_get_status, int_uart_buf_full_get_flag },
   { int_uart_buf_match_set_status, int_uart_buf_match_get_status, int_uart_buf_match_get_flag },
-  { int_systick_set_status, int_systick_get_status, int_systick_get_flag }
+  { int_systick_set_status, int_systick_get_status, int_systick_get_flag },
+  { callback_set_status, callback_get_status, callback_get_flag },
+  { callback_set_status, callback_get_status, callback_get_flag },
+  { callback_set_status, callback_get_status, callback_get_flag }
 };
