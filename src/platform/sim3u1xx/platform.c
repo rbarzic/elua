@@ -1104,6 +1104,7 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
 
+/*
   SI32_CMP_A_select_positive_input(SI32_CMP_0, 5);
   SI32_CMP_A_select_negative_input(SI32_CMP_0, 5);
   SI32_CMP_A_select_positive_hysteresis_20mv(SI32_CMP_0);
@@ -1114,7 +1115,7 @@ void sim3_pmu_pm9( unsigned seconds )
   //SI32_CMP_A_enable_inverted_output( SI32_CMP_0);
 
   SI32_CMP_A_enable_module( SI32_CMP_0 );
-
+*/
   // SI32_CMP_A_enable_falling_edge_interrupt(SI32_CMP_0);
   // SI32_CMP_A_enable_rising_edge_interrupt(SI32_CMP_0);
 
@@ -1166,10 +1167,10 @@ void sim3_pmu_pm9( unsigned seconds )
   // ENABLE RTC_Alarm, RESET pin & Comparator 0 as wake events
   SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
   SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
-  SI32_PMU_A_enable_comparator0_wake_event( SI32_PMU_0 );
+  //SI32_PMU_A_enable_comparator0_wake_event( SI32_PMU_0 );
 
   // Enable 3.8 (WAKE.12)
-  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1C00, 0x1C00 );
+  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1000, 0x1000 );
   SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
@@ -1188,7 +1189,7 @@ void sim3_pmu_pm9( unsigned seconds )
 
   SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
   SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
-  SI32_RSTSRC_A_enable_comparator0_reset_source( SI32_RSTSRC_0 );
+  //SI32_RSTSRC_A_enable_comparator0_reset_source( SI32_RSTSRC_0 );
   SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
 
   // Turn off all peripheral clocks
