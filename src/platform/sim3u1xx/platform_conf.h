@@ -29,12 +29,20 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-// #if defined( ELUA_BOARD_SIM3U1XXBDK )
-// #define CON_UART_ID           2
-// #else
-// #define CON_UART_ID           0
-// #endif
-#define CON_UART_ID         CDC_UART_ID
+
+extern unsigned platform_get_console_uart( void );
+
+
+#if defined( BUILD_USB_CDC )
+#define CON_UART_ID         ( platform_get_console_uart() )
+#define CON_UART_ID_FALLBACK  0
+#else
+#if defined( ELUA_BOARD_SIM3U1XXBDK )
+#define CON_UART_ID           2
+#else
+#define CON_UART_ID           0
+#endif
+#endif
 #define CON_UART_SPEED        38400
 #define TERM_LINES            25
 #define TERM_COLS             80
@@ -87,6 +95,9 @@
 // Configuration data
 
 #define EGC_INITIAL_MODE      1
+
+// SysTick Frequency
+#define SYSTICKHZ             100
 
 // Virtual timers (0 if not used)
 #define VTMR_NUM_TIMERS       0
@@ -147,7 +158,13 @@ u32 cmsis_get_cpu_frequency();
 #define INTERNAL_FLASH_SIZE             ( 256 * 1024 )
 #define INTERNAL_FLASH_SECTOR_SIZE      1024
 #define INTERNAL_FLASH_WRITE_UNIT_SIZE  4
+
+#if defined( USE_BOOTLOADER )
+#define INTERNAL_FLASH_START_ADDRESS    0x00003000
+#else
 #define INTERNAL_FLASH_START_ADDRESS    0x00000000
+#endif
+
 #define BUILD_WOFS
 #endif // #ifdef ELUA_CPU_SIM3U167
 
@@ -155,17 +172,23 @@ u32 cmsis_get_cpu_frequency();
 #define PLATFORM_INT_QUEUE_LOG_SIZE 5
 
 // Interrupt list
-#define INT_UART_RX        ELUA_INT_FIRST_ID
-#define INT_UART_BUF_FULL  ( ELUA_INT_FIRST_ID + 1 )
-#define INT_UART_BUF_MATCH ( ELUA_INT_FIRST_ID + 2 )
-#define INT_SYSTICK ( ELUA_INT_FIRST_ID + 3 )
-#define INT_ELUA_LAST      INT_SYSTICK
+#define INT_UART_RX          ELUA_INT_FIRST_ID
+#define INT_UART_BUF_FULL    ( ELUA_INT_FIRST_ID + 1 )
+#define INT_UART_BUF_MATCH   ( ELUA_INT_FIRST_ID + 2 )
+#define INT_SYSTICK          ( ELUA_INT_FIRST_ID + 3 )
+#define INT_IRIDIUM_SIGNAL   ( ELUA_INT_FIRST_ID + 4 )
+#define INT_IRIDIUM_TX_OK    ( ELUA_INT_FIRST_ID + 5 )
+#define INT_IRIDIUM_TX_FAIL  ( ELUA_INT_FIRST_ID + 6 )
+#define INT_ELUA_LAST        INT_IRIDIUM_TX_FAIL
 
 #define PLATFORM_CPU_CONSTANTS\
     _C( INT_UART_RX ),        \
     _C( INT_UART_BUF_FULL ),  \
     _C( INT_UART_BUF_MATCH ), \
-    _C( INT_SYSTICK )
+    _C( INT_SYSTICK ), \
+    _C( INT_IRIDIUM_SIGNAL ), \
+    _C( INT_IRIDIUM_TX_OK ), \
+    _C( INT_IRIDIUM_TX_FAIL )
 
 #endif // #ifndef __PLATFORM_CONF_H__
 

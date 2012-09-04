@@ -210,12 +210,15 @@ void cmn_platform_init()
     platform_uart_set_buffer( i + SERMUX_SERVICE_ID_FIRST, bufsizes[ i ] );
 #endif // #ifdef BUILD_SERMUX
 
-#if defined( CON_UART_ID ) && CON_UART_ID < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID != CDC_UART_ID )
-  // Setup console UART
-  platform_uart_setup( CON_UART_ID, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );  
-  platform_uart_set_flow_control( CON_UART_ID, CON_FLOW_TYPE );
-  platform_uart_set_buffer( CON_UART_ID, CON_BUF_SIZE );
-#endif // #if defined( CON_UART_ID ) && CON_UART_ID < SERMUX_SERVICE_ID_FIRST
+#if defined( CON_UART_ID )
+  if( CON_UART_ID < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID != CDC_UART_ID ) )
+  {
+    // Setup console UART
+    platform_uart_setup( CON_UART_ID, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );  
+    platform_uart_set_flow_control( CON_UART_ID, CON_FLOW_TYPE );
+    platform_uart_set_buffer( CON_UART_ID, CON_BUF_SIZE );
+  }
+#endif // #if defined( CON_UART_ID )
 
   // Set the send/recv functions                          
   std_set_send_func( uart_send );

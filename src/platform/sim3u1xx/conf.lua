@@ -27,6 +27,7 @@ if comp.bootloader == 'none' then
 else
   print "Compiling for FreakUSB bootloader"
   ldscript = sf( "src/platform/%s/%s_%s.ld", platform, comp.cpu:lower(), comp.bootloader )
+  addm{ "USE_BOOTLOADER" }
 end
 
 
