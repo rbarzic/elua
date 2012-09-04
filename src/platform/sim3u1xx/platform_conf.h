@@ -96,6 +96,9 @@ extern unsigned platform_get_console_uart( void );
 
 #define EGC_INITIAL_MODE      1
 
+// SysTick Frequency
+#define SYSTICKHZ             100
+
 // Virtual timers (0 if not used)
 #define VTMR_NUM_TIMERS       0
 #define VTMR_FREQ_HZ          4

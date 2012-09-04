@@ -26,8 +26,6 @@
 #include "freakusb.h"
 #include "hw.h"
 
-#define SYSTICKHZ             100
-
 // ****************************************************************************
 // Platform initialization
 
