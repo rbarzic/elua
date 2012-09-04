@@ -91,6 +91,9 @@ void HardFault_Handler(void)
   );
 }
 
+#if defined( BUILD_USB_CDC )
+unsigned console_uart_id = CDC_UART_ID;
+#endif
 
 // SiM3 SystemInit calls this function, disable watchdog timer
 void mySystemInit(void)
@@ -156,6 +159,9 @@ int platform_init()
   // init the class driver here
   cdc_init();
 
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
+    console_uart_id = CON_UART_ID_FALLBACK;
+
   // register the rx handler function with the cdc
   //cdc_reg_rx_handler(NULL);
 #endif
@@ -188,7 +194,9 @@ void clk_init( void )
                                          SI32_CLKCTRL_A_APBCLKG0_CRC0 |
                                          SI32_CLKCTRL_A_APBCLKG0_LPTIMER0 |
                                          SI32_CLKCTRL_A_APBCLKG0_USB0 |
-                                         SI32_CLKCTRL_A_APBCLKG0_FLASHCTRL0);
+                                         SI32_CLKCTRL_A_APBCLKG0_FLASHCTRL0 |
+                                         SI32_CLKCTRL_A_APBCLKG0_CMP0
+                                         );
   SI32_CLKCTRL_A_enable_apb_to_modules_1(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG1_MISC1 |
                                          SI32_CLKCTRL_A_APBCLKG1_MISC0);
@@ -200,7 +208,8 @@ void clk_init( void )
                                          SI32_CLKCTRL_A_APBCLKG0_USART0 |
                                          SI32_CLKCTRL_A_APBCLKG0_USART1 |
                                          SI32_CLKCTRL_A_APBCLKG0_UART0 |
-                                         SI32_CLKCTRL_A_APBCLKG0_UART1);
+                                         SI32_CLKCTRL_A_APBCLKG0_UART1 |
+                                         SI32_CLKCTRL_A_APBCLKG0_CMP0);
   SI32_CLKCTRL_A_enable_apb_to_modules_1(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG1_MISC1 |
                                          SI32_CLKCTRL_A_APBCLKG1_MISC0);
@@ -473,6 +482,7 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
 
 // ****************************************************************************
 // UART section
+
 
 static SI32_UART_A_Type* const uart[] = { SI32_UART_0, SI32_UART_1 };
 static SI32_USART_A_Type* const usart[] = { SI32_USART_0, SI32_USART_1 };
@@ -1078,7 +1088,7 @@ void sim3_pmu_reboot( void )
   NVIC_DisableIRQ(USB0_IRQn);
   SI32_USB_A_disable_module(SI32_USB_0);
   SI32_USB_A_disable_internal_pull_up( SI32_USB_0 );
-  
+
   SI32_RSTSRC_A_generate_software_reset( SI32_RSTSRC_0 );
 }
 
@@ -1093,6 +1103,20 @@ void sim3_pmu_pm9( unsigned seconds )
   // RTC running at 16.384Khz so there are 16384 cycles/sec)
   SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
+
+  SI32_CMP_A_select_positive_input(SI32_CMP_0, 5);
+  SI32_CMP_A_select_negative_input(SI32_CMP_0, 5);
+  SI32_CMP_A_select_positive_hysteresis_20mv(SI32_CMP_0);
+  SI32_CMP_A_select_negative_hysteresis_20mv(SI32_CMP_0);
+  //SI32_CMP_A_enable_positive_weak_pullup( SI32_CMP_0 );
+  SI32_CMP_A_select_response_power_mode(SI32_CMP_0, 3);
+  SI32_CMP_A_disable_inverted_output(SI32_CMP_0);
+  //SI32_CMP_A_enable_inverted_output( SI32_CMP_0);
+
+  SI32_CMP_A_enable_module( SI32_CMP_0 );
+
+  // SI32_CMP_A_enable_falling_edge_interrupt(SI32_CMP_0);
+  // SI32_CMP_A_enable_rising_edge_interrupt(SI32_CMP_0);
 
   // Stop USB
   SI32_USB_A_reset_module( SI32_USB_0 );
@@ -1122,6 +1146,7 @@ void sim3_pmu_pm9( unsigned seconds )
   // PB0 & resetting pins as digital input (sets latch high)
   SI32_PBSTD_A_enable_pullup_resistors( port_std[ 0 ] );
   SI32_PBSTD_A_set_pins_digital_input( port_std[ 0 ], 0x6000);
+  SI32_PBSTD_A_enable_pullup_resistors( port_std[ 3 ] );
 
   // Prep PBHD for PM9 and set up as digital inputs as done with
   // PBSTD ports.
@@ -1137,12 +1162,14 @@ void sim3_pmu_pm9( unsigned seconds )
   // DISABLE all wakeup sources
   SI32_PMU_A_write_wakeen(SI32_PMU_0, 0x0);
 
-  // ENABLE RTC_Alarm * RESET pin as wake events
+
+  // ENABLE RTC_Alarm, RESET pin & Comparator 0 as wake events
   SI32_PMU_A_enable_rtc0_alarm_wake_event( SI32_PMU_0 );
   SI32_PMU_A_enable_reset_pin_wake_event( SI32_PMU_0 );
+  SI32_PMU_A_enable_comparator0_wake_event( SI32_PMU_0 );
 
   // Enable 3.8 (WAKE.12)
-  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1000, 0x1000 );
+  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1C00, 0x1C00 );
   SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
@@ -1161,10 +1188,12 @@ void sim3_pmu_pm9( unsigned seconds )
 
   SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
   SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
+  SI32_RSTSRC_A_enable_comparator0_reset_source( SI32_RSTSRC_0 );
   SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK;
 
   // Turn off all peripheral clocks
   SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
+
 
   // SET DEEPSLEEP in SCR (and service all pending interrutps before sleep
   SCB->SCR = 0x14;
@@ -1345,6 +1374,10 @@ int platform_flash_erase_sector( u32 sector_id )
 
 #if defined( BUILD_USB_CDC )
 
+unsigned platform_get_console_uart( void )
+{
+  return console_uart_id;
+}
 
 void platform_usb_cdc_send( u8 data )
 {

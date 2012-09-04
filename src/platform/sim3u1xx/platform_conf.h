@@ -29,12 +29,20 @@
 // *****************************************************************************
 // UART/Timer IDs configuration data (used in main.c)
 
-// #if defined( ELUA_BOARD_SIM3U1XXBDK )
-// #define CON_UART_ID           2
-// #else
-// #define CON_UART_ID           0
-// #endif
-#define CON_UART_ID         CDC_UART_ID
+
+extern unsigned platform_get_console_uart( void );
+
+
+#if defined( BUILD_USB_CDC )
+#define CON_UART_ID         ( platform_get_console_uart() )
+#define CON_UART_ID_FALLBACK  0
+#else
+#if defined( ELUA_BOARD_SIM3U1XXBDK )
+#define CON_UART_ID           2
+#else
+#define CON_UART_ID           0
+#endif
+#endif
 #define CON_UART_SPEED        38400
 #define TERM_LINES            25
 #define TERM_COLS             80
