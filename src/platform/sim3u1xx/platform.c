@@ -151,6 +151,8 @@ int platform_init()
 #endif
 
 #if defined( BUILD_USB_CDC )
+  SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 1 << 8 ) );
+
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
     console_uart_id = CON_UART_ID_FALLBACK;
   else
@@ -161,7 +163,6 @@ int platform_init()
     // init the class driver here
     cdc_init();
   }
-
   // register the rx handler function with the cdc
   //cdc_reg_rx_handler(NULL);
 #endif
