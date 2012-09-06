@@ -123,7 +123,7 @@ int platform_init()
   clk_init();
 
   //Set flash read speed to slow
-  SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
+  //SI32_FLASHCTRL_A_select_flash_read_time_slow(SI32_FLASHCTRL_0);
 
   SI32_PMU_A_clear_pmu_level_shifter_hold(SI32_PMU_0);
   SI32_PMU_A_clear_pin_level_shifter_hold(SI32_PMU_0);
@@ -168,16 +168,16 @@ int platform_init()
   cmn_platform_init();
 
   return PLATFORM_OK;
-} 
+}
 
 
 void clk_init( void )
 {
 
-  SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
+  //SI32_CLKCTRL_A_select_ahb_divider(SI32_CLKCTRL_0, SI32_CLKCTRL_A_CONTROL_AHBDIV_DIV8_VALUE);
 
   // Set system clock to AHB divider frequency
-  SystemCoreClock = 2500000;
+  //SystemCoreClock = 2500000;
 #if defined( ELUA_BOARD_GSBRD )
   SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG0_PB0 |
@@ -201,7 +201,7 @@ void clk_init( void )
   //SI32_CLKCTRL_A_enable_ahb_to_emif(SI32_CLKCTRL_0);
 
 #else
-  SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0, 
+  SI32_CLKCTRL_A_enable_apb_to_modules_0(SI32_CLKCTRL_0,
                                          SI32_CLKCTRL_A_APBCLKG0_PB0 |
                                          SI32_CLKCTRL_A_APBCLKG0_USART0 |
                                          SI32_CLKCTRL_A_APBCLKG0_USART1 |
@@ -351,7 +351,7 @@ void pios_init( void )
   //SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_2, 0x00000300);
 
   // UART PINS TO PROPER CONFIG (TX = PB1.12, RX = PB1.13)
-  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x0001000);    
+  SI32_PBSTD_A_set_pins_push_pull_output(SI32_PBSTD_1, 0x0001000);
   SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_1, 0x00002000);
   SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_0, 0x0000FFFF);
   SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_1, 0x00000FFF);
@@ -402,7 +402,7 @@ void pios_init( void )
 pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
 {
   pio_type retval = 1;
-  
+
   switch( op )
   {
     case PLATFORM_IO_PORT_SET_VALUE:
@@ -411,28 +411,28 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
       else
         SI32_PBHD_A_write_pins_masked( SI32_PBHD_4, 0xFFFF, pinmask);
       break;
-    
+
     case PLATFORM_IO_PIN_SET:
       if( port < 4)
         SI32_PBSTD_A_write_pins_high( port_std[ port ], pinmask );
       else
         SI32_PBHD_A_write_pins_high( SI32_PBHD_4, pinmask );
       break;
-    
+
     case PLATFORM_IO_PIN_CLEAR:
       if( port < 4)
         SI32_PBSTD_A_write_pins_low( port_std[ port ], pinmask );
       else
         SI32_PBHD_A_write_pins_low( SI32_PBHD_4, pinmask );
       break;
-    
+
     case PLATFORM_IO_PORT_DIR_OUTPUT:
       if( port < 4 )
         SI32_PBSTD_A_set_pins_push_pull_output( port_std[ port ], 0xFFFF );
       else
         SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0xFFFF );
         //SI32_PBHD_A_enable_p_channel_drivers( SI32_PBHD_4, 0xFFFF );
-      break;    
+      break;
 
     case PLATFORM_IO_PIN_DIR_OUTPUT:
       if( port < 4 )
@@ -441,7 +441,7 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
         SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, pinmask );
         //SI32_PBHD_A_enable_p_channel_drivers( SI32_PBHD_4, pinmask );
       break;
-    
+
     case PLATFORM_IO_PORT_DIR_INPUT:
       if( port < 4 )
         SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], 0xFFFF );
@@ -454,22 +454,22 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
         SI32_PBSTD_A_set_pins_digital_input( port_std[ port ], pinmask );
       else
         SI32_PBHD_A_set_pins_digital_input( SI32_PBHD_4, pinmask );
-      break;    
-          
+      break;
+
     case PLATFORM_IO_PORT_GET_VALUE:
       if( port < 4 )
         retval = SI32_PBSTD_A_read_pins( port_std[ port ] );
       else
         retval = SI32_PBHD_A_read_pins( SI32_PBHD_4 );
       break;
-    
+
     case PLATFORM_IO_PIN_GET:
       if( port < 4 )
         retval = ( SI32_PBSTD_A_read_pins(port_std[ port ]) & pinmask ) ? 1 : 0;
       else
         retval = ( SI32_PBHD_A_read_pins( SI32_PBHD_4 ) & pinmask ) ? 1 : 0;
       break;
-    
+
     default:
       retval = 0;
       break;
@@ -512,9 +512,9 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_USART_A_select_rx_data_length( usart[ id ], databits );
 
 
-    SI32_USART_A_enable_tx_start_bit( usart[ id ] );  
+    SI32_USART_A_enable_tx_start_bit( usart[ id ] );
     SI32_USART_A_enable_tx_stop_bit( usart[ id ] );
-    SI32_USART_A_enable_rx_start_bit( usart[ id ] );  
+    SI32_USART_A_enable_rx_start_bit( usart[ id ] );
     SI32_USART_A_enable_rx_stop_bit( usart[ id ] );
 
     if( stopbits == PLATFORM_UART_STOPBITS_2 )
@@ -535,14 +535,14 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
         SI32_USART_A_disable_tx_parity_bit( usart[ id ] );
         SI32_USART_A_disable_rx_parity_bit( usart[ id ] );
         break;
-    
+
       case PLATFORM_UART_PARITY_ODD:
         SI32_USART_A_enable_tx_parity_bit( usart[ id ] );
         SI32_USART_A_select_tx_parity( usart[ id ], 0 );
         SI32_USART_A_enable_rx_parity_bit( usart[ id ] );
         SI32_USART_A_select_rx_parity( usart[ id ], 0 );
         break;
-    
+
       case PLATFORM_UART_PARITY_EVEN:
         SI32_USART_A_enable_tx_parity_bit( usart[ id ] );
         SI32_USART_A_select_tx_parity( usart[ id ], 1 );
@@ -563,7 +563,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
   else
   {
     id = id - 2;
- 
+
     SI32_UART_A_enter_full_duplex_mode( uart[ id ] );
 
     // Set Baud Rate
@@ -580,9 +580,9 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_UART_A_select_rx_data_length( uart[ id ], databits );
 
 
-    SI32_UART_A_enable_tx_start_bit( uart[ id ] );  
+    SI32_UART_A_enable_tx_start_bit( uart[ id ] );
     SI32_UART_A_enable_tx_stop_bit( uart[ id ] );
-    SI32_UART_A_enable_rx_start_bit( uart[ id ] );  
+    SI32_UART_A_enable_rx_start_bit( uart[ id ] );
     SI32_UART_A_enable_rx_stop_bit( uart[ id ] );
 
     if( stopbits == PLATFORM_UART_STOPBITS_2 )
@@ -603,14 +603,14 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
         SI32_UART_A_disable_tx_parity_bit( uart[ id ] );
         SI32_UART_A_disable_rx_parity_bit( uart[ id ] );
         break;
-    
+
       case PLATFORM_UART_PARITY_ODD:
         SI32_UART_A_enable_tx_parity_bit( uart[ id ] );
         SI32_UART_A_select_tx_parity( uart[ id ], 0 );
         SI32_UART_A_enable_rx_parity_bit( uart[ id ] );
         SI32_UART_A_select_rx_parity( uart[ id ], 0 );
         break;
-    
+
       case PLATFORM_UART_PARITY_EVEN:
         SI32_UART_A_enable_tx_parity_bit( uart[ id ] );
         SI32_UART_A_select_tx_parity( uart[ id ], 1 );
@@ -628,8 +628,8 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
     SI32_UART_A_enable_tx( uart[ id ] );
     SI32_UART_A_enable_rx( uart[ id ] );
   }
-  
-  
+
+
   return baud; // FIXME: find a way to actually get baud
 }
 
@@ -665,7 +665,7 @@ int platform_s_uart_recv( unsigned id, timer_data_type timeout )
       else
         return ( int )SI32_USART_A_read_data_u8( usart[ id ] );
     }
-  
+
     // Block if input buffer is empty
     while (SI32_USART_A_read_rx_fifo_count( usart[ id ] ) == 0);
 
@@ -682,7 +682,7 @@ int platform_s_uart_recv( unsigned id, timer_data_type timeout )
       else
         return ( int )SI32_UART_A_read_data_u8( uart[ id ] );
     }
-  
+
     // Block if input buffer is empty
     while (SI32_UART_A_read_rx_fifo_count( uart[ id ] ) == 0);
 
@@ -744,7 +744,7 @@ static u32 platform_timer_get_clock( unsigned id )
 static u32 platform_timer_set_clock( unsigned id, u32 clock )
 {
 
-  
+
   return clock;
 }
 
@@ -763,7 +763,7 @@ void platform_s_timer_delay( unsigned id, timer_data_type delay_us )
 {
 
 }
-      
+
 timer_data_type platform_s_timer_op( unsigned id, int op, timer_data_type data )
 {
   u32 res = 0;
@@ -772,13 +772,13 @@ timer_data_type platform_s_timer_op( unsigned id, int op, timer_data_type data )
   {
     case PLATFORM_TIMER_OP_START:
       break;
-      
+
     case PLATFORM_TIMER_OP_READ:
       break;
 
     case PLATFORM_TIMER_OP_SET_CLOCK:
       break;
-      
+
     case PLATFORM_TIMER_OP_GET_CLOCK:
       break;
 
@@ -911,7 +911,7 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
     SI32_I2C_A_clear_start( i2cs[ id ] );
     SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
-  
+
     while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
 
     acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
@@ -951,7 +951,7 @@ int platform_i2c_send_byte( unsigned id, u8 data )
     SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
 
     while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
-    
+
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
 
 #if defined( DEBUG_I2C )
@@ -1032,9 +1032,9 @@ void sim3_pmu_sleep( unsigned seconds )
 
   // SET ALARM FOR now+s
   // RTC running at 16.384Khz so there are 16384 cycles/sec)
-  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
+  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds));
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
-  
+
   // Enable RTC alarm interrupt
   SI32_RTC_A_enable_alarm0_interrupt(SI32_RTC_0);
 
@@ -1042,7 +1042,7 @@ void sim3_pmu_sleep( unsigned seconds )
   //SI32_PBCFG_A_write_xbar1(SI32_PBCFG_0,0x00000000);
   //SI32_PBCFG_A_write_xbar0h(SI32_PBCFG_0,0x00000000);
   //SI32_PBCFG_A_write_xbar0l(SI32_PBCFG_0,0x00000000);
-  
+
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
 
@@ -1099,7 +1099,7 @@ void sim3_pmu_pm9( unsigned seconds )
 
   // SET ALARM FOR now+s
   // RTC running at 16.384Khz so there are 16384 cycles/sec)
-  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds)); 
+  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds));
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
 
 /*
@@ -1154,7 +1154,7 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_PBHD_A_set_pins_digital_input( SI32_PBHD_4, 0x3F );
   SI32_PBHD_A_disable_pullup_resistors( SI32_PBHD_4 );
   SI32_PBHD_A_write_pins_low( SI32_PBHD_4, 0x3F );
-  
+
   // Mask low priority interrupts from waking us
   __set_BASEPRI(0x40);
 
@@ -1381,7 +1381,7 @@ unsigned platform_get_console_uart( void )
 void platform_usb_cdc_send( u8 data )
 {
     usb_pcb_t *pcb = usb_pcb_get();
-    
+
     if (!(pcb->flags & (1<<ENUMERATED)))
     {
         return;

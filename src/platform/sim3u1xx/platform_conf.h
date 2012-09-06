@@ -43,7 +43,7 @@ extern unsigned platform_get_console_uart( void );
 #define CON_UART_ID           0
 #endif
 #endif
-#define CON_UART_SPEED        38400
+#define CON_UART_SPEED        115200
 #define TERM_LINES            25
 #define TERM_COLS             80
 
@@ -57,7 +57,7 @@ extern unsigned platform_get_console_uart( void );
 #endif
 
 // RPC
-#if defined( BUILD_RPC ) 
+#if defined( BUILD_RPC )
 #define RPCLINE _ROM( AUXLIB_RPC, luaopen_rpc, rpc_map )
 #else
 #define RPCLINE
@@ -127,7 +127,7 @@ extern unsigned platform_get_console_uart( void );
 // #define ADC_TIMER_FIRST_ID    0
 // #define ADC_NUM_TIMERS        4
 
-// RPC  
+// RPC
 #define RPC_UART_ID           CON_UART_ID
 
 // CPU frequency (needed by the CPU module, 0 if not used)
@@ -179,7 +179,10 @@ u32 cmsis_get_cpu_frequency();
 #define INT_IRIDIUM_SIGNAL   ( ELUA_INT_FIRST_ID + 4 )
 #define INT_IRIDIUM_TX_OK    ( ELUA_INT_FIRST_ID + 5 )
 #define INT_IRIDIUM_TX_FAIL  ( ELUA_INT_FIRST_ID + 6 )
-#define INT_ELUA_LAST        INT_IRIDIUM_TX_FAIL
+#define INT_IRIDIUM_TIMEOUT  ( ELUA_INT_FIRST_ID + 7 )
+#define INT_GPS_VALID        ( ELUA_INT_FIRST_ID + 8 )
+#define INT_GPS_TIMEOUT      ( ELUA_INT_FIRST_ID + 9 )
+#define INT_ELUA_LAST        INT_GPS_TIMEOUT
 
 #define PLATFORM_CPU_CONSTANTS\
     _C( INT_UART_RX ),        \
@@ -188,7 +191,9 @@ u32 cmsis_get_cpu_frequency();
     _C( INT_SYSTICK ), \
     _C( INT_IRIDIUM_SIGNAL ), \
     _C( INT_IRIDIUM_TX_OK ), \
-    _C( INT_IRIDIUM_TX_FAIL )
+    _C( INT_IRIDIUM_TIMEOUT ), \
+    _C( INT_GPS_VALID ), \
+    _C( INT_GPS_TIMEOUT )
 
 #endif // #ifndef __PLATFORM_CONF_H__
 
