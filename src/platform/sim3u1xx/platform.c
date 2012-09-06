@@ -151,14 +151,16 @@ int platform_init()
 #endif
 
 #if defined( BUILD_USB_CDC )
-  usb_init();
-  hw_init();
-
-  // init the class driver here
-  cdc_init();
-
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
     console_uart_id = CON_UART_ID_FALLBACK;
+  else
+  {
+    usb_init();
+    hw_init();
+
+    // init the class driver here
+    cdc_init();
+  }
 
   // register the rx handler function with the cdc
   //cdc_reg_rx_handler(NULL);
@@ -258,7 +260,10 @@ void SysTick_Handler()
   // Handle system timer call
   cmn_systimer_periodic();
 
-  usb_poll();
+#if defined( BUILD_USB_CDC )
+  if( console_uart_id == CDC_UART_ID )
+    usb_poll();
+#endif
 
 #if defined( INT_SYSTICK )
     cmn_int_handler( INT_SYSTICK, 0 );
