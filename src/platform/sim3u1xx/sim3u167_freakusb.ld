@@ -1,11 +1,12 @@
 MEMORY
 {
-    sram (W!RX) : ORIGIN = 0x20000000, LENGTH = 0x8000
+    sram (W!RX) : ORIGIN = 0x20000010, LENGTH = 0x7FEF
+    sret (W!RX) : ORIGIN = 0x20000000, LENGTH = 0x0010
     flash (RX) : ORIGIN = 0x00003000, LENGTH = 0x3CFFC
 }
 
 SECTIONS
-{  
+{
     .text :
     {
         . = ALIGN(4);
@@ -29,12 +30,12 @@ SECTIONS
 	__bss_section_table_end = .;
 	__section_table_end = . ;
 	/* End of Global Section Table */
-		
+
 
 	*(.after_vectors*)
 
-        *(.text .text.*)        
-        *(.rodata .rodata.*)        
+        *(.text .text.*)
+        *(.rodata .rodata.*)
         *(.gnu.linkonce.t.*)
         *(.glue_7)
         *(.glue_7t)
@@ -43,7 +44,7 @@ SECTIONS
         . = ALIGN(4);
         _etext = .;
 		_sidata = _etext;
-        PROVIDE(etext = .);   
+        PROVIDE(etext = .);
      		_fini = . ;
 				*(.fini)
 
@@ -59,12 +60,12 @@ SECTIONS
         . = ALIGN(4);
         _edata = .;
     } >sram
-		
+
 		.ARM.extab :
 		{
 		    *(.ARM.extab*)
 		} >sram
-		
+
 		__exidx_start = .;
 		.ARM.exidx :
 		{
@@ -81,10 +82,10 @@ SECTIONS
         *(.bss .bss.*)
         *(.gnu.linkonce.b.*)
         *(COMMON)
-        . = ALIGN(4);        
+        . = ALIGN(4);
         _ebss = .;
     } >sram
-    
+
     end = .;
     PROVIDE( _estack = 0x20008000 );
     PROVIDE(_vStackTop = 0x20008000);
