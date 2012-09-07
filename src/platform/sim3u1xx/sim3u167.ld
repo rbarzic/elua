@@ -1,7 +1,7 @@
 MEMORY
 {
-    sram (W!RX) : ORIGIN = 0x20000010, LENGTH = 0x7FEF
     sret (W!RX) : ORIGIN = 0x20000000, LENGTH = 0x0010
+    sram (W!RX) : ORIGIN = 0x20000010, LENGTH = 0x7FEF
     flash (RX) : ORIGIN = 0x00000000, LENGTH = 0x3fffc
 }
 
@@ -31,7 +31,6 @@ SECTIONS
 	__section_table_end = . ;
 	/* End of Global Section Table */
 
-
 	*(.after_vectors*)
 
         *(.text .text.*)
@@ -49,6 +48,14 @@ SECTIONS
 				*(.fini)
 
     } >flash
+
+    .sret (NOLOAD) : {
+        . = ALIGN(4);
+        _ssret = .;
+        *(.sret .sret.*)
+        . = ALIGN(4);
+        _esret = .;
+    } >sret
 
     .data : AT (_etext)
     {
