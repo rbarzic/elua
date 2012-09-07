@@ -29,6 +29,11 @@
 // ****************************************************************************
 // Platform initialization
 
+#define PIN_CHECK_INTERVAL 10
+
+// Sleep Persisten SRAM Storage
+int rram_reg[4] __attribute__((section(".sret")));
+
 // forward dcls
 static void pios_init();
 static void clk_init();
@@ -92,6 +97,9 @@ void HardFault_Handler(void)
 #if defined( BUILD_USB_CDC )
 unsigned console_uart_id = CDC_UART_ID;
 #endif
+
+
+void sim3_pmu_pm9( unsigned seconds );
 
 // SiM3 SystemInit calls this function, disable watchdog timer
 void mySystemInit(void)
@@ -169,6 +177,24 @@ int platform_init()
 
   // Common platform initialization code
   cmn_platform_init();
+
+  if( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_RTC0_RESET ) ||
+      ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_PMU_WAKEUP_RESET ))
+  {
+    if ( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) != SI32_POWER_ON_RESET) ||
+         ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) != SI32_VDD_MON_RESET ) )
+    {
+      SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 6 ) ) );
+
+      if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 6 ) ) == 0 )
+      {
+        if( rram_reg[0] > 0 )
+        {
+          sim3_pmu_pm9( rram_reg[0] );
+        }
+      }
+    }
+  }
 
   return PLATFORM_OK;
 }
@@ -1096,6 +1122,8 @@ void sim3_pmu_reboot( void )
   SI32_RSTSRC_A_generate_software_reset( SI32_RSTSRC_0 );
 }
 
+
+
 void sim3_pmu_pm9( unsigned seconds )
 {
   u8 i;
@@ -1105,23 +1133,18 @@ void sim3_pmu_pm9( unsigned seconds )
 
   // SET ALARM FOR now+s
   // RTC running at 16.384Khz so there are 16384 cycles/sec)
-  SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds));
+  if( seconds > PIN_CHECK_INTERVAL )
+  {
+    rram_reg[0] = seconds - PIN_CHECK_INTERVAL;
+    SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * PIN_CHECK_INTERVAL));
+  }
+  else
+  {
+    rram_reg[0] = 0;
+    SI32_RTC_A_write_alarm0(SI32_RTC_0, SI32_RTC_A_read_setcap(SI32_RTC_0) + (16384 * seconds));
+  }
+
   SI32_RTC_A_clear_alarm0_interrupt(SI32_RTC_0);
-
-/*
-  SI32_CMP_A_select_positive_input(SI32_CMP_0, 5);
-  SI32_CMP_A_select_negative_input(SI32_CMP_0, 5);
-  SI32_CMP_A_select_positive_hysteresis_20mv(SI32_CMP_0);
-  SI32_CMP_A_select_negative_hysteresis_20mv(SI32_CMP_0);
-  //SI32_CMP_A_enable_positive_weak_pullup( SI32_CMP_0 );
-  SI32_CMP_A_select_response_power_mode(SI32_CMP_0, 3);
-  SI32_CMP_A_disable_inverted_output(SI32_CMP_0);
-  //SI32_CMP_A_enable_inverted_output( SI32_CMP_0);
-
-  SI32_CMP_A_enable_module( SI32_CMP_0 );
-*/
-  // SI32_CMP_A_enable_falling_edge_interrupt(SI32_CMP_0);
-  // SI32_CMP_A_enable_rising_edge_interrupt(SI32_CMP_0);
 
   // Stop USB
   SI32_USB_A_reset_module( SI32_USB_0 );
@@ -1174,8 +1197,8 @@ void sim3_pmu_pm9( unsigned seconds )
   //SI32_PMU_A_enable_comparator0_wake_event( SI32_PMU_0 );
 
   // Enable 3.8 (WAKE.12)
-  SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1000, 0x1000 );
-  SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
+  // SI32_PMU_A_set_pin_wake_events( SI32_PMU_0, 0x1000, 0x1000 );
+  // SI32_PMU_A_enable_pin_wake_event( SI32_PMU_0 );
 
   SI32_DMACTRL_A_disable_module( SI32_DMACTRL_0 );
 
@@ -1183,7 +1206,7 @@ void sim3_pmu_pm9( unsigned seconds )
   SI32_VREG_A_disable_band_gap( SI32_VREG_0 );
   SI32_VREG_A_enter_suspend_mode( SI32_VREG_0 );
   //SI32_VREG_A_enable_vbus_invalid_interrupt( SI32_VREG_0 );
-  SI32_PMU_A_enable_pin_wake( SI32_PMU_0 );
+  // SI32_PMU_A_enable_pin_wake( SI32_PMU_0 );
 
   // Disable VDD Monitor
   SI32_VMON_A_disable_vdd_supply_monitor(SI32_VMON_0);
