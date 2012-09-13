@@ -1371,7 +1371,7 @@ u32 platform_s_flash_write( const void *from, u32 toaddr, u32 size )
 int platform_flash_erase_sector( u32 sector_id )
 {
   flash_key_mask = 0x01;
-  return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
+  return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE + INTERNAL_FLASH_START_ADDRESS, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
 }
 
 // ****************************************************************************
