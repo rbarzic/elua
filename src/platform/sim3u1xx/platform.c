@@ -31,6 +31,10 @@
 
 #define PIN_CHECK_INTERVAL 10
 
+void sim3_pmu_reboot( void );
+
+extern int load_lua_function (char *func);
+
 // Sleep Persisten SRAM Storage
 int rram_reg[4] __attribute__((section(".sret")));
 
@@ -74,7 +78,11 @@ void hard_fault_handler_c(unsigned int * hardfault_args)
   printf ("HFSR = %x\n", (*((volatile unsigned  *)(0xE000ED2C))));
   printf ("DFSR = %x\n", (*((volatile unsigned  *)(0xE000ED30))));
   printf ("AFSR = %x\n", (*((volatile unsigned  *)(0xE000ED3C))));
+  printf ("\n");
+  printf ("\n");
+  printf ("\n");
 
+  sim3_pmu_reboot();
   while (1) { ;; }
 }
 
@@ -113,9 +121,33 @@ void mySystemInit(void)
 
 }
 
+#if defined( ELUA_BOARD_GSBRD )
+u8 external_power()
+{
+  //check USB DC 3.8 or HVDC 3.7
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 7 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 8 ) ) );
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 7 ) ) ||
+      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 8 ) ) )
+    return 1;
+  else
+    return 0;
+}
+u8 external_buttons()
+{
+  //check inputs 1 and 2
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 6 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 0 << 1 ) ) );
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 6 ) ) ||
+      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 0 << 1 ) ) )
+    return 1;
+  else
+    return 0;
+}
+#endif
+
 int platform_init()
 {
-  int i;
   SystemInit();
 
   // Configure the NVIC Preemption Priority Bits:
@@ -159,9 +191,9 @@ int platform_init()
 #endif
 
 #if defined( BUILD_USB_CDC )
-  SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 1 << 8 ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 3 << 8 ) );
 
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 8 ) ) == 0 )
     console_uart_id = CON_UART_ID_FALLBACK;
   else
   {
@@ -178,27 +210,52 @@ int platform_init()
   // Common platform initialization code
   cmn_platform_init();
 
-  if( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_RTC0_RESET ) ||
+#if defined( ELUA_BOARD_GSBRD )
+
+  //Determine if we had a power failure, voltage dropout, or reset button pressed
+  //The pre-generated code for SI32_RSTSRC_A_get_last_reset_source is incorrect and does
+  //not take into account PORRF. Also, these registers MUST be read in order PORRF, VMONRF, PINRF
+  //as the remainder are invalid if the previous one is set. See table 6.2.
+  if ((SI32_RSTSRC_0->RESETFLAG.PORRF == 1)
+    ||  (SI32_RSTSRC_0->RESETFLAG.VMONRF == 1)
+    ||  (SI32_RSTSRC_0->RESETFLAG.PINRF == 1))
+
+  /*if ( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_POWER_ON_RESET) ||
+       ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_VDD_MON_RESET ) /||
+      rram_reg[0] > 600/) // Make sure we never sleep more than 1 hour*/
+  {
+    //Fresh powerup! Reset our retained ram registers
+    rram_reg[0] = 0;
+    rram_reg[1] = 0;
+    rram_reg[2] = 0;
+    rram_reg[3] = 0;
+  } else if ((SI32_RSTSRC_0->RESETFLAG.RTC0RF == 1)
+    || (SI32_RSTSRC_0->RESETFLAG.WAKERF == 1))
+  {
+  /*if( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_RTC0_RESET ) ||
       ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) == SI32_PMU_WAKEUP_RESET ))
   {
-    if ( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) != SI32_POWER_ON_RESET) ||
+    if ( ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) != SI32_POWER_ON_RESET) &&
          ( SI32_RSTSRC_A_get_last_reset_source(SI32_RSTSRC_0) != SI32_VDD_MON_RESET ) )
-    {
-      SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 6 ) ) );
-
-      if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 6 ) ) == 0 )
+    {*/
+      if(external_buttons() || external_power())
       {
-        if( rram_reg[0] > 0 )
+        //Continue on as normal. The timer will count down rram_reg and execute
+        //the appropriate script when it reaches zero
+      }
+      else
+      {
+        if( rram_reg[0] > 0 )  //Go back to sleep if we woke from a PMU wakeup
         {
           sim3_pmu_pm9( rram_reg[0] );
         }
       }
-    }
+//    }
   }
+#endif
 
   return PLATFORM_OK;
 }
-
 
 void clk_init( void )
 {
@@ -277,6 +334,29 @@ u32 cmsis_get_cpu_frequency()
 {
   return SystemCoreClock;
 }
+static u8 tickSeconds = 0;
+void SecondsTick_Handler()
+{
+  //Check if we are supposed to be sleeping
+  if(rram_reg[0] > 0)
+  {
+    rram_reg[0]--;
+    if(rram_reg[0] == 0)
+    {
+      //Our timer has expired and we are still powered, start TX script
+      //Do a software reboot UNTIL we get the memory leaks sorted out...
+      sim3_pmu_reboot();
+      //Normally we would run the startup script, but fix memory leaks first...
+      printf("startup %i\n", load_lua_function("startup"));
+    }
+    if(external_power() == 0)
+    {
+      sim3_pmu_pm9( rram_reg[0] );
+    }
+    else
+      printf("sleep %i\n", rram_reg[0]);
+  }
+}
 
 // SysTick interrupt handler
 void SysTick_Handler()
@@ -296,6 +376,12 @@ void SysTick_Handler()
     cmn_int_handler( INT_SYSTICK, 0 );
 #endif
 
+  tickSeconds++;
+  if(tickSeconds == SYSTICKHZ)
+  {
+    SecondsTick_Handler();
+    tickSeconds = 0;
+  }
 }
 
 // ****************************************************************************
@@ -365,6 +451,10 @@ void pios_init( void )
 
   // PB3 Setup
   SI32_PBSTD_A_write_pbskipen(SI32_PBSTD_3, 0x00FF);
+  SI32_PBSTD_A_set_pins_digital_input(SI32_PBSTD_3, 0x000001C0);
+  SI32_PBSTD_A_disable_pullup_resistors( SI32_PBSTD_3 );
+
+  SI32_PBSTD_A_disable_pullup_resistors( SI32_PBSTD_1 );
 
   // Enable Crossbar1 signals & set properties
   SI32_PBCFG_A_enable_crossbar_1(SI32_PBCFG_0);
@@ -406,6 +496,11 @@ void pios_init( void )
   SI32_PBHD_A_enable_bias(SI32_PBHD_4);
   SI32_PBHD_A_select_normal_power_port_mode(SI32_PBHD_4);
   SI32_PBHD_A_enable_drivers(SI32_PBHD_4);
+
+  //Setup PB4.0/4.1 to outputs, no pullups, and low for MOSFET outputs
+  SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0x0003 );
+  SI32_PBHD_A_disable_pullup_resistors( SI32_PBHD_4 );
+  SI32_PBHD_A_write_pins_low( SI32_PBHD_4, 0x03 );
 
   SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
 
@@ -770,13 +865,12 @@ int platform_s_uart_set_flow_control( unsigned id, int type )
 // Helper function: get timer clock
 static u32 platform_timer_get_clock( unsigned id )
 {
+  return 0;
 }
 
 // Helper function: set timer clock
 static u32 platform_timer_set_clock( unsigned id, u32 clock )
 {
-
-
   return clock;
 }
 
@@ -1127,6 +1221,14 @@ void sim3_pmu_reboot( void )
 void sim3_pmu_pm9( unsigned seconds )
 {
   u8 i;
+
+  if(external_power())
+  {
+    printf("Unit is powered, no PM9\n");
+    rram_reg[0] = seconds;
+    return;
+  }
+
   // GET CURRENT TIMER VALUE INTO SETCAP
   SI32_RTC_A_start_timer_capture(SI32_RTC_0);
   while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
@@ -1479,6 +1581,9 @@ LUALIB_API int luaopen_platform( lua_State *L )
 #if LUA_OPTIMIZE_MEMORY > 0
   return 0;
 #else // #if LUA_OPTIMIZE_MEMORY > 0
+  //Turn on aggressive emergency garbage collection
+  legc_set_mode( L, EGC_ALWAYS, 20);
+
   luaL_register( L, PS_LIB_TABLE_NAME, platform_map );
 
   // Setup the new tables inside platform table

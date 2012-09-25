@@ -1,4 +1,4 @@
-import os, sys 
+import os, sys
 
 output = 'luac.cross'
 cdefs = '-DLUA_CROSS_COMPILER'
@@ -21,6 +21,6 @@ comp = Environment( CCCOM = cccom,
 if comp['PLATFORM'] == 'win32':
   suffix = ".exe"
 else:
-  suffix = ".elf"                    
-Decider( 'MD5' )                  
+  suffix = ".elf"
+Decider( 'MD5' )
 Default( comp.Program( output + suffix, Split( lua_full_files ) ) )

@@ -29,16 +29,16 @@ static void all_usart_irqhandler( int resnum )
 {
   if( resnum < 2 )
   {
-    while( SI32_USART_A_read_rx_fifo_count( sim3_usart[ resnum ] ) > 0 )  
+    while( SI32_USART_A_read_rx_fifo_count( sim3_usart[ resnum ] ) > 0 )
       cmn_int_handler( INT_UART_RX, resnum );
-    
+
     SI32_USART_A_clear_rx_data_request_interrupt(sim3_usart[ resnum ]);
   }
   else
   {
-    while( SI32_UART_A_read_rx_fifo_count( sim3_uart[ resnum - 2 ] ) > 0 )  
+    while( SI32_UART_A_read_rx_fifo_count( sim3_uart[ resnum - 2 ] ) > 0 )
       cmn_int_handler( INT_UART_RX, resnum );
-    
+
     SI32_UART_A_clear_rx_data_request_interrupt(sim3_uart[ resnum - 2 ]);
   }
 }
@@ -83,7 +83,7 @@ static int int_uart_rx_get_status( elua_int_resnum resnum )
 static int int_uart_rx_set_status( elua_int_resnum resnum, int status )
 {
   int prev = int_uart_rx_get_status( resnum );
-  
+
   if( resnum < 2 )
   {
     if( status == PLATFORM_CPU_ENABLE )
@@ -95,7 +95,7 @@ static int int_uart_rx_set_status( elua_int_resnum resnum, int status )
     else
     {
       SI32_USART_A_disable_rx_data_request_interrupt( sim3_usart[ resnum ] );
-      NVIC_DisableIRQ( usart_irq_table[ resnum ] );  
+      NVIC_DisableIRQ( usart_irq_table[ resnum ] );
     }
   }
   else
@@ -112,25 +112,25 @@ static int int_uart_rx_set_status( elua_int_resnum resnum, int status )
       SI32_UART_A_disable_rx_data_request_interrupt( sim3_uart[ resnum ] );
       NVIC_DisableIRQ( uart_irq_table[ resnum ] );
     }
-  }  
+  }
   return prev;
 }
 
 static int int_uart_rx_get_flag( elua_int_resnum resnum, int clear )
 {
   int status;
-  
+
   if( resnum < 2 )
   {
-    int status = ( int )SI32_USART_A_is_rx_data_request_interrupt_pending( sim3_usart[ resnum ] );
+    status = ( int )SI32_USART_A_is_rx_data_request_interrupt_pending( sim3_usart[ resnum ] );
     if( clear )
       SI32_USART_A_clear_rx_data_request_interrupt( sim3_usart[ resnum ] );
   }
   else
   {
     resnum = resnum - 2;
-    int status = ( int )SI32_UART_A_is_rx_data_request_interrupt_pending( sim3_uart[ resnum ] );
-    
+    status = ( int )SI32_UART_A_is_rx_data_request_interrupt_pending( sim3_uart[ resnum ] );
+
     if( clear )
       SI32_UART_A_clear_rx_data_request_interrupt( sim3_uart[ resnum ] );
   }
@@ -223,7 +223,7 @@ void platform_int_init()
 // Interrupt table
 // Must have a 1-to-1 correspondence with the interrupt enum in platform_conf.h!
 
-const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] = 
+const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
 {
   { int_uart_rx_set_status, int_uart_rx_get_status, int_uart_rx_get_flag },
   { int_uart_buf_full_set_status, int_uart_buf_full_get_status, int_uart_buf_full_get_flag },

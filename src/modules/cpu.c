@@ -17,7 +17,7 @@
 static int cpu_w32( lua_State *L )
 {
   u32 addr, data;
-  
+
   luaL_checkinteger( L, 1 );
   luaL_checkinteger( L, 2 );
   addr = ( u32 )luaL_checknumber( L, 1 );
@@ -33,7 +33,7 @@ static int cpu_r32( lua_State *L )
 
   luaL_checkinteger( L, 1 );
   addr = ( u32 )luaL_checknumber( L, 1 );
-  lua_pushnumber( L, ( lua_Number )( *( u32* )addr ) );  
+  lua_pushnumber( L, ( lua_Number )( *( u32* )addr ) );
   return 1;
 }
 
@@ -42,7 +42,7 @@ static int cpu_w16( lua_State *L )
 {
   u32 addr;
   u16 data = ( u16 )luaL_checkinteger( L, 2 );
-  
+
   luaL_checkinteger( L, 1 );
   addr = ( u32 )luaL_checknumber( L, 1 );
   *( u16* )addr = data;
@@ -56,7 +56,7 @@ static int cpu_r16( lua_State *L )
 
   luaL_checkinteger( L, 1 );
   addr = ( u32 )luaL_checknumber( L, 1 );
-  lua_pushnumber( L, ( lua_Number )( *( u16* )addr ) );  
+  lua_pushnumber( L, ( lua_Number )( *( u16* )addr ) );
   return 1;
 }
 
@@ -65,7 +65,7 @@ static int cpu_w8( lua_State *L )
 {
   u32 addr;
   u8 data = ( u8 )luaL_checkinteger( L, 2 );
-  
+
   luaL_checkinteger( L, 1 );
   addr = ( u32 )luaL_checknumber( L, 1 );
   *( u8* )addr = data;
@@ -79,7 +79,7 @@ static int cpu_r8( lua_State *L )
 
   luaL_checkinteger( L, 1 );
   addr = ( u32 )luaL_checknumber( L, 1 );
-  lua_pushnumber( L, ( lua_Number )( *( u8* )addr ) );  
+  lua_pushnumber( L, ( lua_Number )( *( u8* )addr ) );
   return 1;
 }
 
@@ -88,20 +88,21 @@ static int cpu_set_param( lua_State *L )
 {
   u32 nvalue;
   u8 *svalue;
-  u8 *name;
-  
-  name = ( u8 * )luaL_checkstring( L, 1 );
+  const char *name;
+  const char *prefix = "";
+
+  name = luaL_checkstring( L, 1 );
   if( lua_isnumber( L, 2 ) )
   {
     nvalue = ( u32 )luaL_checkinteger( L, 2);
-    if( set_param_s32( name, nvalue ) < 0 )
+    if( set_param_s32( name, prefix, nvalue ) < 0 )
       luaL_error( L, "couldn't save number" );
 
   }
   else if ( lua_isstring( L, 2 ) )
   {
     svalue = ( u8 * )luaL_checkstring( L, 2 );
-    if( set_param_string( name, svalue ) < 0 )
+    if( set_param_string( name, prefix, svalue ) < 0 )
       luaL_error( L, "couldn't save string" );
   }
   return 0;
@@ -112,14 +113,15 @@ static int cpu_get_param( lua_State *L )
 {
   s32 nvalue;
   u8 *svalue;
-  u8 *name;
+  const char *name;
+  const char *prefix = "";
 
-  name = ( u8 * )luaL_checkstring( L, 1 );
+  name = luaL_checkstring( L, 1 );
 
-  switch( get_param_type( name ) )
+  switch( get_param_type( name, prefix ) )
   {
     case PARAM_INTEGER:
-      if( get_param_s32( name, &nvalue ) < 0 )
+      if( get_param_s32( name, prefix, &nvalue ) < 0 )
         luaL_error( L, "couldn't get number" );
       else
       {
@@ -128,8 +130,8 @@ static int cpu_get_param( lua_State *L )
       }
       break;
     case PARAM_STRING:
-      svalue = ( u8 * )malloc( get_param_string_len( name ) + 1 );
-      if( get_param_string( name, svalue, get_param_string_len( name ) + 1 ) < 0 )
+      svalue = ( u8 * )malloc( get_param_string_len( name, prefix ) + 1 );
+      if( get_param_string( name, prefix, svalue, get_param_string_len( name, prefix ) + 1 ) < 0 )
         luaL_error( L, "couldn't get string" );
       else
       {
@@ -209,7 +211,7 @@ typedef struct
 } cpu_const_t;
 
 #ifdef PLATFORM_CPU_CONSTANTS
-static const cpu_const_t cpu_constants[] = 
+static const cpu_const_t cpu_constants[] =
 {
   PLATFORM_CPU_CONSTANTS,
   { NULL, 0 }
@@ -219,7 +221,7 @@ static int cpu_mt_index( lua_State *L )
 {
   const char *key = luaL_checkstring( L, 2 );
   unsigned i = 0;
-  
+
   while( cpu_constants[ i ].name != NULL )
   {
     if( !strcmp( cpu_constants[ i ].name, key ) )
@@ -279,7 +281,7 @@ static int cpu_get_int_handler( lua_State *L )
 static int cpu_get_int_flag( lua_State *L )
 {
   elua_int_id id;
-  elua_int_resnum resnum;  
+  elua_int_resnum resnum;
   int clear = 1;
   int res;
 
@@ -307,7 +309,7 @@ static int cpu_get_int_flag( lua_State *L )
 // Module function map
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
-const LUA_REG_TYPE cpu_map[] = 
+const LUA_REG_TYPE cpu_map[] =
 {
   { LSTRKEY( "w32" ), LFUNCVAL( cpu_w32 ) },
   { LSTRKEY( "r32" ), LFUNCVAL( cpu_r32 ) },
@@ -347,13 +349,13 @@ LUALIB_API int luaopen_cpu( lua_State *L )
 #else // #if LUA_OPTIMIZE_MEMORY > 0
   // Register methods
   luaL_register( L, AUXLIB_CPU, cpu_map );
-  
+
 #ifdef PLATFORM_CPU_CONSTANTS
   // Set table as its own metatable
   lua_pushvalue( L, -1 );
   lua_setmetatable( L, -2 );
 #endif // #ifdef PLATFORM_CPU_CONSTANTS
-  
+
   return 1;
 #endif // #if LUA_OPTIMIZE_MEMORY > 0
 }

@@ -191,6 +191,7 @@ u32 cmsis_get_cpu_frequency();
     _C( INT_SYSTICK ), \
     _C( INT_IRIDIUM_SIGNAL ), \
     _C( INT_IRIDIUM_TX_OK ), \
+    _C( INT_IRIDIUM_TX_FAIL ), \
     _C( INT_IRIDIUM_TIMEOUT ), \
     _C( INT_GPS_VALID ), \
     _C( INT_GPS_TIMEOUT )

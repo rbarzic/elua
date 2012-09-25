@@ -4,14 +4,22 @@
 
 #include "param.h"
 
-int32_t set_param( uint8_t * name, uint8_t type, uint8_t * value, uint32_t length )
+
+FILE * open_param_file(const char * name, const char * prefix, const char * format, const char * mode)
+{
+    char fname[20];
+    sprintf( fname, format, prefix, name );
+    FILE * ret = fopen(fname, mode);
+    if(ret == NULL)
+      printf("no file %s\n", fname);
+    return ret;
+}
+int32_t set_param( const char * name, const char * prefix, uint8_t type, uint8_t * value, uint32_t length )
 {
     FILE *fp;
-    char fname[20];
     int n;
 
-    sprintf( fname, SETTING_FORMAT, name );
-    fp = fopen(fname, "w+");
+    fp = open_param_file(name, prefix, SETTING_FORMAT, "w+");
 
     // bail if we can't write out setting
     if (fp == NULL)
@@ -23,36 +31,37 @@ int32_t set_param( uint8_t * name, uint8_t type, uint8_t * value, uint32_t lengt
     return n;
 }
 
-int32_t get_param( uint8_t * name, uint8_t type, uint8_t * value, uint32_t length )
+int32_t get_param( const char * name, const char * prefix, uint8_t type, uint8_t * value, uint32_t length )
 {
     FILE *fp;
-    char fname[20];
     int n;
 
-    sprintf( fname, SETTING_FORMAT, name );
-    fp = fopen(fname, "r");
+    fp = open_param_file(name, prefix, SETTING_FORMAT, "r");
 
     // bail if we can't get stored setting
     if (fp == NULL)
+    {
         return -1;
+    }
 
     // bail if type isn't what we expected
     if( fgetc( fp ) != type)
+    {
+        printf("bad type\n");
         return -2;
+    }
 
     n = fread(value, 1, length, fp);
     fclose(fp);
+    printf("read %i b\n", n);
     return n; // return length of item actually read
 }
 
-int32_t get_param_type( uint8_t * name)
+int32_t get_param_type( const char * name, const char * prefix)
 {
     FILE *fp;
-    char fname[20];
-    int n;
 
-    sprintf( fname, SETTING_FORMAT, name );
-    fp = fopen(fname, "r");
+    fp = open_param_file(name, prefix, SETTING_FORMAT, "r");
 
     if (fp == NULL)
         return -1;
@@ -61,19 +70,19 @@ int32_t get_param_type( uint8_t * name)
 }
 
 // store 32-bit integer parameter
-int32_t set_param_s32( uint8_t * name, int32_t value )
+int32_t set_param_s32( const char * name, const char * prefix, int32_t value )
 {
-    return set_param( name, PARAM_INTEGER, ( uint8_t * )&value, 4 );
+    return set_param( name, prefix, PARAM_INTEGER, ( uint8_t * )&value, 4 );
 }
 
 // get 32-bit integer parameter, return number of bytes read
-int32_t get_param_s32( uint8_t * name, int32_t *value )
+int32_t get_param_s32( const char * name, const char * prefix, int32_t *value )
 {
     uint8_t b[4];
     int32_t ret;
 
-    ret = get_param( name, PARAM_INTEGER, b, 4);
-    
+    ret = get_param( name, prefix, PARAM_INTEGER, b, 4);
+
     if( ret < 0 )
         return ret;
 
@@ -82,20 +91,19 @@ int32_t get_param_s32( uint8_t * name, int32_t *value )
 }
 
 // store string parameter
-int32_t set_param_string( uint8_t * name, uint8_t * value )
+int32_t set_param_string( const char * name, const char * prefix, uint8_t * value )
 {
-    return set_param( name, PARAM_STRING, value, strlen( ( const char * )value ) );
+    return set_param( name, prefix, PARAM_STRING, value, strlen( ( const char * )value ) );
 }
 
 // return string parameter length
-int32_t get_param_string_len( uint8_t * name )
+int32_t get_param_string_len( const char * name, const char * prefix )
 {
     FILE *fp;
-    char fname[20];
     int n = 0;
 
-    sprintf( fname, SETTING_FORMAT, name );
-    fp = fopen(fname, "r");
+    fp = open_param_file(name, prefix, SETTING_FORMAT, "r");
+
     if( fp == NULL )
         return -1;
 
@@ -108,18 +116,18 @@ int32_t get_param_string_len( uint8_t * name )
 
 
 // get string parameter, return length
-int32_t get_param_string( uint8_t * name, uint8_t *value, uint32_t max_len  )
+int32_t get_param_string( const char * name, const char * prefix, uint8_t *value, uint32_t max_len  )
 {
     int32_t len;
 
-    len = get_param_string_len( name );
+    len = get_param_string_len( name, prefix );
 
     // If an error was encountered, pass it up
     if( len < 0 )
         return len;
 
     if( len <= max_len )
-        len = get_param( name, PARAM_STRING, value, len);
+        len = get_param( name, prefix, PARAM_STRING, value, len);
     else
         return -3;
 
