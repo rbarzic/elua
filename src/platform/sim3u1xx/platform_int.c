@@ -9,6 +9,7 @@
 // Platform-specific headers
 #include "sim3u1xx.h"
 #include "sim3u1xx_Types.h"
+//#include <stdio.h>
 
 #ifndef VTMR_TIMER_ID
 #define VTMR_TIMER_ID         ( -1 )
@@ -66,6 +67,8 @@ void UART1_IRQHandler(void)
   if (SI32_UART_A_is_rx_data_request_interrupt_pending(SI32_UART_1))
      all_usart_irqhandler( 3 );
 }
+
+
 
 
 
@@ -212,11 +215,68 @@ static int callback_get_flag( elua_int_resnum resnum, int clear )
 // ****************************************************************************
 // Initialize interrupt subsystem
 
+static SI32_PBSTD_A_Type* const port_std[] = { SI32_PBSTD_0, SI32_PBSTD_1, SI32_PBSTD_2, SI32_PBSTD_3 };
+
+#define MATCH_PORTNUM1 3
+#define MATCH_PINNUM1  8
+
+#define MATCH_PORTNUM2 0
+#define MATCH_PINNUM2  1
+
+
+void PMATCH_IRQHandler(void) 
+{
+  // First Toggle
+  if( ( ~( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) ^ port_std[MATCH_PORTNUM1]->PM.U32) ) & (1<<MATCH_PINNUM1) )
+  {
+    if( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) & (1<<MATCH_PINNUM1) )
+    {
+      port_std[MATCH_PORTNUM1]->PM_CLR = (1<<MATCH_PINNUM1);
+
+      // Do something on high transition for first
+    }
+    else
+    {
+      port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
+
+      // Do something on low transition for first
+      //printf("PMATCH LOW 1\n");
+    }
+  }
+
+
+  // Second Toggle
+  if( ( ~( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM2 ]) ^ port_std[MATCH_PORTNUM2]->PM.U32) ) & (1<<MATCH_PINNUM2) )
+  {
+    if( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM2 ]) & (1<<MATCH_PINNUM2) )
+    {
+      port_std[MATCH_PORTNUM2]->PM_CLR = (1<<MATCH_PINNUM2);
+
+      // Do something on high transition for second
+    }
+    else
+    {
+      port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
+
+      // Do something on low transition for second
+      //printf("PMATCH LOW 2\n");
+
+    }
+  }
+}
 
 void platform_int_init()
 {
+  // Set up first match
+  port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
+  port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
 
+  // Set up second match
+  port_std[MATCH_PORTNUM2]->PMEN_SET = (1<<MATCH_PINNUM2);
+  port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
 
+  NVIC_ClearPendingIRQ( PMATCH_IRQn );
+  NVIC_EnableIRQ( PMATCH_IRQn );
 }
 
 // ****************************************************************************
