@@ -1,6 +1,7 @@
 // STM32 interrupt support
 
 // Generic headers
+#include <stdio.h>
 #include "platform.h"
 #include "platform_conf.h"
 #include "elua_int.h"
@@ -218,14 +219,18 @@ static int callback_get_flag( elua_int_resnum resnum, int clear )
 static SI32_PBSTD_A_Type* const port_std[] = { SI32_PBSTD_0, SI32_PBSTD_1, SI32_PBSTD_2, SI32_PBSTD_3 };
 
 #define MATCH_PORTNUM1 3
-#define MATCH_PINNUM1  8
+#define MATCH_PINNUM1  6
 
 #define MATCH_PORTNUM2 0
 #define MATCH_PINNUM2  1
 
 
-void PMATCH_IRQHandler(void) 
+void PMATCH_IRQHandler(void)
 {
+  printf("Match Bank 0 %x\n", SI32_PBSTD_A_read_pins(port_std[0]));
+  printf("Match Bank 1 %x\n", SI32_PBSTD_A_read_pins(port_std[1]));
+  printf("Match Bank 2 %x\n", SI32_PBSTD_A_read_pins(port_std[2]));
+  printf("Match Bank 3 %x\n", SI32_PBSTD_A_read_pins(port_std[3]));
   // First Toggle
   if( ( ~( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) ^ port_std[MATCH_PORTNUM1]->PM.U32) ) & (1<<MATCH_PINNUM1) )
   {
@@ -240,7 +245,7 @@ void PMATCH_IRQHandler(void)
       port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
 
       // Do something on low transition for first
-      //printf("PMATCH LOW 1\n");
+      printf("PMATCH LOW 1\n");
     }
   }
 
@@ -259,7 +264,7 @@ void PMATCH_IRQHandler(void)
       port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
 
       // Do something on low transition for second
-      //printf("PMATCH LOW 2\n");
+      printf("PMATCH LOW 2\n");
 
     }
   }
@@ -268,7 +273,7 @@ void PMATCH_IRQHandler(void)
 void platform_int_init()
 {
   // Set up first match
-  port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
+  /*port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
   port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
 
   // Set up second match
@@ -276,7 +281,7 @@ void platform_int_init()
   port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
 
   NVIC_ClearPendingIRQ( PMATCH_IRQn );
-  NVIC_EnableIRQ( PMATCH_IRQn );
+  NVIC_EnableIRQ( PMATCH_IRQn );*/
 }
 
 // ****************************************************************************
