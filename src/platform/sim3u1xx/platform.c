@@ -145,6 +145,14 @@ int external_buttons()
 static int pmu_wake_status = -1;
 static int pmu_status = -1;
 static int reset_status = -1;
+void reset_parameters()
+{
+  rram_reg[0] = 0;
+  rram_reg[1] = 0;
+  rram_reg[2] = 0;
+  rram_reg[3] = 0;
+}
+
 int platform_init()
 {
   SystemInit();
@@ -222,8 +230,13 @@ int platform_init()
   //as the remainder are invalid if the previous one is set. See table 6.2.
   if((pmu_status & SI32_PMU_A_STATUS_PM9EF_MASK) == SI32_PMU_A_STATUS_PM9EF_SET_U32)
   {
-    //Check for pin wake
-    if((pmu_status & SI32_PMU_A_STATUS_PWAKEF_MASK) == (0 << SI32_PMU_A_STATUS_PWAKEF_SHIFT)) //NOTE: SiLabs headers are wrong, this bit is backwards per the manual...
+    //Check for reset pin while in PM9
+    if((pmu_wake_status & SI32_PMU_A_WAKESTATUS_RSTWF_MASK) == SI32_PMU_A_WAKESTATUS_RSTWF_SET_VALUE)
+    {
+      reset_parameters();
+      wake_reason = 6;
+    }
+    else if((pmu_status & SI32_PMU_A_STATUS_PWAKEF_MASK) == (0 << SI32_PMU_A_STATUS_PWAKEF_SHIFT)) //Check for pin wake NOTE: SiLabs headers are wrong, this bit is backwards per the manual...
     {
       //Wakeup from WAKE pins, just reset reg[0] so we stay awake
       rram_reg[0] = 0;
@@ -253,10 +266,7 @@ int platform_init()
     ||  ((reset_status & SI32_RSTSRC_A_RESETFLAG_PINRF_MASK) == SI32_RSTSRC_A_RESETFLAG_PINRF_SET_U32))
   {
     //Fresh powerup! Reset our retained ram registers
-    rram_reg[0] = 0;
-    rram_reg[1] = 0;
-    rram_reg[2] = 0;
-    rram_reg[3] = 0;
+    reset_parameters();
     wake_reason = 1;
   }
 
