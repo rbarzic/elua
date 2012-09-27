@@ -125,10 +125,10 @@ void mySystemInit(void)
 u8 external_power()
 {
   //check USB DC 3.8 or HVDC 3.7
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 7 ) ) );
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 8 ) ) );
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 7 ) ) ||
-      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 8 ) ) )
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 7 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 8 ) ) );
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 7 ) ) ||
+      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) )
     return 1;
   else
     return 0;
@@ -136,10 +136,10 @@ u8 external_power()
 u8 external_buttons()
 {
   //check inputs 1 and 2
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 3 << 6 ) ) );
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 0 << 1 ) ) );
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 6 ) ) ||
-      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 0 << 1 ) ) )
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 6 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_0, ( ( 1 << 1 ) ) );
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 6 ) ) ||
+      ( SI32_PBSTD_A_read_pins( SI32_PBSTD_0 ) & ( 1 << 1 ) ) )
     return 1;
   else
     return 0;
@@ -191,9 +191,9 @@ int platform_init()
 #endif
 
 #if defined( BUILD_USB_CDC )
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 3 << 8 ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 1 << 8 ) );
 
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 3 << 8 ) ) == 0 )
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
     console_uart_id = CON_UART_ID_FALLBACK;
   else
   {
