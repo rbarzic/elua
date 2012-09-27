@@ -29,7 +29,7 @@
 // ****************************************************************************
 // Platform initialization
 
-#define PIN_CHECK_INTERVAL 10
+#define PIN_CHECK_INTERVAL 20
 static int wake_reason = 0;
 
 void sim3_pmu_reboot( void );
@@ -126,11 +126,6 @@ void mySystemInit(void)
 int external_power()
 {
   //check USB DC 3.8 or HVDC 3.7
-<<<<<<< HEAD
-=======
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 7 ) ) );
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 8 ) ) );
->>>>>>> 410c9007c726bf6234929ece42b1be7e725700a3
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 7 ) ) ||
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) )
     return 1;
@@ -140,11 +135,6 @@ int external_power()
 int external_buttons()
 {
   //check inputs 1 and 2
-<<<<<<< HEAD
-=======
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 6 ) ) );
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_0, ( ( 1 << 1 ) ) );
->>>>>>> 410c9007c726bf6234929ece42b1be7e725700a3
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 6 ) ) ||
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_0 ) & ( 1 << 1 ) ) )
     return 1;
@@ -252,7 +242,7 @@ int platform_init()
         wake_reason = 3;
         if( rram_reg[0] > 0 )  //Go back to sleep if we woke from a PMU wakeup
         {
-          sim3_pmu_pm9( rram_reg[0] );
+          //sim3_pmu_pm9( rram_reg[0] );
           wake_reason = 4;
         }
       }
@@ -1348,13 +1338,13 @@ void sim3_pmu_pm9( unsigned seconds )
 
   SI32_RSTSRC_A_enable_power_mode_9(SI32_RSTSRC_0);
   SI32_RSTSRC_A_enable_rtc0_reset_source(SI32_RSTSRC_0);
-  SI32_PMU_A_disable_pin_wake_reset(SI32_PMU_0);
   //SI32_RSTSRC_A_enable_comparator0_reset_source( SI32_RSTSRC_0 );
 //  SI32_RSTSRC_0->RESETEN_SET = SI32_RSTSRC_A_RESETEN_WAKEREN_MASK | 0x0000003; //The default value has the first 2 bits set
 
   // Turn off all peripheral clocks
   SI32_CLKCTRL_A_disable_apb_to_all_modules( SI32_CLKCTRL_0 );
 
+  //PROBLEM: If this is enabled, the PMU STATUS register does not indicate wake from PM9...
   //SI32_CLKCTRL_A_select_ahb_source_low_frequency_oscillator( SI32_CLKCTRL_0 );
 
   // SET DEEPSLEEP in SCR (and service all pending interrutps before sleep
