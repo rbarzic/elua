@@ -126,6 +126,11 @@ void mySystemInit(void)
 int external_power()
 {
   //check USB DC 3.8 or HVDC 3.7
+<<<<<<< HEAD
+=======
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 7 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 8 ) ) );
+>>>>>>> 410c9007c726bf6234929ece42b1be7e725700a3
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 7 ) ) ||
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) )
     return 1;
@@ -135,6 +140,11 @@ int external_power()
 int external_buttons()
 {
   //check inputs 1 and 2
+<<<<<<< HEAD
+=======
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( ( 1 << 6 ) ) );
+  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_0, ( ( 1 << 1 ) ) );
+>>>>>>> 410c9007c726bf6234929ece42b1be7e725700a3
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 6 ) ) ||
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_0 ) & ( 1 << 1 ) ) )
     return 1;
