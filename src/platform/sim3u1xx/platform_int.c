@@ -245,7 +245,7 @@ void PMATCH_IRQHandler(void)
       port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
 
       // Do something on low transition for first
-      printf("PMATCH LOW 1\n");
+      printf("POWER BUTTON\n");
     }
   }
 
@@ -264,7 +264,7 @@ void PMATCH_IRQHandler(void)
       port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
 
       // Do something on low transition for second
-      printf("PMATCH LOW 2\n");
+      printf("CHECK IN BUTTON\n");
 
     }
   }
@@ -272,8 +272,8 @@ void PMATCH_IRQHandler(void)
 
 void platform_int_init()
 {
-  // Set up first match
-  /*port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
+  /*// Set up first match
+  port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
   port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
 
   // Set up second match

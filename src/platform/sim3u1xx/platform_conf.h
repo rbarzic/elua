@@ -182,7 +182,8 @@ u32 cmsis_get_cpu_frequency();
 #define INT_IRIDIUM_TIMEOUT  ( ELUA_INT_FIRST_ID + 7 )
 #define INT_GPS_VALID        ( ELUA_INT_FIRST_ID + 8 )
 #define INT_GPS_TIMEOUT      ( ELUA_INT_FIRST_ID + 9 )
-#define INT_ELUA_LAST        INT_GPS_TIMEOUT
+#define INT_SYSINIT          ( ELUA_INT_FIRST_ID + 10 )
+#define INT_ELUA_LAST        INT_SYSINIT
 
 #define PLATFORM_CPU_CONSTANTS\
     _C( INT_UART_RX ),        \
@@ -194,7 +195,27 @@ u32 cmsis_get_cpu_frequency();
     _C( INT_IRIDIUM_TX_FAIL ), \
     _C( INT_IRIDIUM_TIMEOUT ), \
     _C( INT_GPS_VALID ), \
-    _C( INT_GPS_TIMEOUT )
+    _C( INT_GPS_TIMEOUT ), \
+    _C( INT_SYSINIT )
+
+
+#define RRAM_FLAG_DEEP_SLEEP 0x80000000
+#define RRAM_FLAG_DEEP_SLEEP_MASK 0x7FFFFFFF
+// Sleep Persistent SRAM Storage
+extern int rram_reg[4] __attribute__((section(".sret")));
+
+
+typedef enum {
+    WAKE_UNKNOWN = 0x00,
+    WAKE_POWERUP = 0x01,
+    WAKE_RESETPIN = 0x02,
+    WAKE_WAKEPIN = 0x03,
+    WAKE_RTC = 0x04,
+    WAKE_POWERCONNECTED = 0x05
+
+} wake_type;
+
+extern wake_type wake_reason;
 
 #endif // #ifndef __PLATFORM_CONF_H__
 
