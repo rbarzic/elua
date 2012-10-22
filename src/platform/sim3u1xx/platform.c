@@ -16,6 +16,7 @@
 #include "platform_conf.h"
 #include "lrotable.h"
 #include "buf.h"
+#include "sermux.h"
 
 // Platform includes
 #include "sim3u1xx.h"
@@ -227,14 +228,13 @@ int platform_init()
 
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
     console_uart_id = CON_UART_ID_FALLBACK;
-  else
-  {
-    usb_init();
-    hw_init();
 
-    // init the class driver here
-    cdc_init();
-  }
+  usb_init();
+  hw_init();
+
+  // init the class driver here
+  cdc_init();
+
   // register the rx handler function with the cdc
   //cdc_reg_rx_handler(NULL);
 #endif
@@ -426,6 +426,23 @@ void SysTick_Handler()
   cmn_systimer_periodic();
 
 #if defined( BUILD_USB_CDC )
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
+  {
+    if( console_uart_id == CDC_UART_ID )
+    {
+      if( CON_UART_ID_FALLBACK < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID_FALLBACK != CDC_UART_ID ) )
+      {
+        // Setup console UART
+        platform_uart_setup( CON_UART_ID_FALLBACK, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
+        platform_uart_set_flow_control( CON_UART_ID_FALLBACK, PLATFORM_UART_FLOW_NONE );
+        platform_uart_set_buffer( CON_UART_ID_FALLBACK, CON_BUF_SIZE );
+      }
+    }
+    console_uart_id = CON_UART_ID_FALLBACK;
+  }
+  else
+    console_uart_id = CDC_UART_ID;
+
   if( console_uart_id == CDC_UART_ID )
     usb_poll();
 #endif
