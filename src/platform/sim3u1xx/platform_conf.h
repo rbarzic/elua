@@ -202,7 +202,7 @@ u32 cmsis_get_cpu_frequency();
 #define RRAM_FLAG_DEEP_SLEEP 0x80000000
 #define RRAM_FLAG_DEEP_SLEEP_MASK 0x7FFFFFFF
 // Sleep Persistent SRAM Storage
-extern int rram_reg[4] __attribute__((section(".sret")));
+extern int rram_reg[8] __attribute__((section(".sret")));
 
 
 typedef enum {

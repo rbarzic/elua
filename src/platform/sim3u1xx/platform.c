@@ -48,7 +48,7 @@
 #define PIN_CHECK_INTERVAL 10
 wake_type wake_reason = WAKE_UNKNOWN;
 
-int rram_reg[4] __attribute__((section(".sret")));
+int rram_reg[8] __attribute__((section(".sret")));
 int rtc_remaining = 0;
 
 void sim3_pmu_reboot( void );
@@ -414,7 +414,7 @@ void SecondsTick_Handler()
          reset_status,
          wake_reason,
          rtc_remaining  );
-    firstSecond = 0;
+    //firstSecond = 0;
   }
 }
 
