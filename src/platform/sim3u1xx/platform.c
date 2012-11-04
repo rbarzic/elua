@@ -44,10 +44,11 @@
 // ****************************************************************************
 // Platform initialization
 
-#define PIN_CHECK_INTERVAL 600
+#define TRICK_TO_REBOOT_WITHOUT_DFU_MODE 628187
+#define PIN_CHECK_INTERVAL 10
 wake_type wake_reason = WAKE_UNKNOWN;
 
-int rram_reg[4] __attribute__((section(".sret")));
+int rram_reg[8] __attribute__((section(".sret")));
 int rtc_remaining = 0;
 
 void sim3_pmu_reboot( void );
@@ -139,7 +140,7 @@ void mySystemInit(void)
 
 #if defined( ELUA_BOARD_GSBRD )
 int external_power()
-{ return 0;
+{
   //check USB DC 3.8 or HVDC 3.7
   if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 7 ) ) ||
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) )
@@ -389,9 +390,10 @@ void SecondsTick_Handler()
     {
       //Our timer has expired and we are still powered, start TX script
       //Do a software reboot UNTIL we get the memory leaks sorted out...
-      sim3_pmu_reboot();
+      //sim3_pmu_reboot();
+      sim3_pmu_pm9(TRICK_TO_REBOOT_WITHOUT_DFU_MODE);
       //Normally we would run the startup script, but fix memory leaks first...
-      printf("startup %i\n", load_lua_function("startup"));
+      printf("startup %i\n", load_lua_function("autorun"));
     }
     if(external_power() == 0)
     {
@@ -412,7 +414,7 @@ void SecondsTick_Handler()
          reset_status,
          wake_reason,
          rtc_remaining  );
-    firstSecond = 0;
+    //firstSecond = 0;
   }
 }
 
@@ -1404,12 +1406,14 @@ void sim3_pmu_pm9( unsigned seconds )
 {
   //u8 i;
 
-  if(external_power())
+  if(seconds != TRICK_TO_REBOOT_WITHOUT_DFU_MODE && external_power())
   {
     printf("Unit is powered, no PM9\n");
     rram_reg[0] = seconds;
     return;
   }
+  if(seconds == TRICK_TO_REBOOT_WITHOUT_DFU_MODE)
+    seconds = 1;
 
   // GET CURRENT TIMER VALUE INTO SETCAP
   //SI32_RTC_A_start_timer_capture(SI32_RTC_0);
@@ -1763,7 +1767,7 @@ void platform_usb_cdc_send( u8 data )
     {
         return;
     }
-
+  
     usb_buf_write(EP_1, (U8)data);
     ep_write(EP_1);
 }
