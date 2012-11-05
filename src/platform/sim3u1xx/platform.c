@@ -414,7 +414,7 @@ void SecondsTick_Handler()
          reset_status,
          wake_reason,
          rtc_remaining  );
-    //firstSecond = 0;
+    firstSecond = 0;
   }
 }
 
