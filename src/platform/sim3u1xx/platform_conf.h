@@ -35,7 +35,7 @@ extern unsigned platform_get_console_uart( void );
 
 #if defined( BUILD_USB_CDC )
 #define CON_UART_ID         ( platform_get_console_uart() )
-#define CON_UART_ID_FALLBACK  0
+#define CON_UART_ID_HW_UART  0
 #else
 #if defined( ELUA_BOARD_SIM3U1XXBDK )
 #define CON_UART_ID           2
