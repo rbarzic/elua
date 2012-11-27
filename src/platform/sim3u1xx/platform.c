@@ -44,12 +44,13 @@
 // ****************************************************************************
 // Platform initialization
 
-#define TRICK_TO_REBOOT_WITHOUT_DFU_MODE 628187
+//#define CHARGER_MOSFETS_PRESENT
 #define PIN_CHECK_INTERVAL 10
-wake_type wake_reason = WAKE_UNKNOWN;
+int wake_reason = WAKE_UNKNOWN;
 
 int rram_reg[8] __attribute__((section(".sret")));
-int rtc_remaining = 0;
+static int rtc_remaining = 0;
+static u8 sleep_delay = 0;
 
 void sim3_pmu_reboot( void );
 
@@ -120,11 +121,10 @@ void HardFault_Handler(void)
 }
 
 #if defined( BUILD_USB_CDC )
-unsigned console_uart_id = CDC_UART_ID;
+unsigned console_uart_id = CON_UART_ID_FALLBACK;//CDC_UART_ID;
 #endif
 
 
-void sim3_pmu_pm9( unsigned seconds );
 
 // SiM3 SystemInit calls this function, disable watchdog timer
 void mySystemInit(void)
@@ -149,9 +149,9 @@ int external_power()
     return 0;
 }
 int external_buttons()
-{ return 0;
+{
   //check inputs 1 and 2
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 6 ) ) ||
+  if( /*( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 6 ) ) ||*/
       ( SI32_PBSTD_A_read_pins( SI32_PBSTD_0 ) & ( 1 << 1 ) ) )
     return 1;
   else
@@ -163,11 +163,13 @@ static int pmu_status = -1;
 static int reset_status = -1;
 void reset_parameters()
 {
-  rram_reg[0] = 0;
-  rram_reg[1] = 0;
-  rram_reg[2] = 0;
-  rram_reg[3] = 0;
+  int i;
+  for(i=0;i<8;i++)
+  {
+    rram_reg[i] = 0;
+  }
 }
+
 
 int platform_init()
 {
@@ -252,7 +254,7 @@ int platform_init()
   if((pmu_status & SI32_PMU_A_STATUS_PM9EF_MASK) == SI32_PMU_A_STATUS_PM9EF_SET_U32)
   {
     //Check for reset pin while in PM9
-    if((pmu_wake_status & SI32_PMU_A_WAKESTATUS_RSTWF_MASK) == SI32_PMU_A_WAKESTATUS_RSTWF_SET_VALUE)
+    if((pmu_wake_status & SI32_PMU_A_WAKESTATUS_RSTWF_MASK) == SI32_PMU_A_WAKESTATUS_RSTWF_SET_U32)
     {
       reset_parameters();
       wake_reason = WAKE_RESETPIN;
@@ -264,29 +266,41 @@ int platform_init()
       wake_reason = WAKE_WAKEPIN;
 
       //Put the remaining sleep time back into rram_reg[0]
-      rram_reg[0] = rtc_remaining;
+      rram_reg[0] += rtc_remaining;
+
+      //Don't auto-sleep for some period of seconds
+      sleep_delay = 5;
     }
     else
     {
+      if(rram_read_bit(RRAM_BIT_POWEROFF) == POWEROFF_MODE_ACTIVE)
+      {
+        rram_reg[0] = 0x7FFFFFFF; //will wakeup in 68 years
+      } 
+      else if(rram_read_bit(RRAM_BIT_STORAGE_MODE) == STORAGE_MODE_ACTIVE)
+      {
+        //Sleep forever, in storage mode. Power button will wakeup device
+        rram_reg[0] = 0x7FFFFFFF; //will wakeup in 68 years
+      } 
+
       if(external_buttons() || external_power())
       {
         //Continue on as normal. The timer will count down rram_reg and execute
         //the appropriate script when it reaches zero
         wake_reason = WAKE_POWERCONNECTED;
       }
-      else
+      else if( rram_reg[0] > 0 )  //Go back to sleep if we woke from a PMU wakeup
       {
-        if( rram_reg[0] > 0 )  //Go back to sleep if we woke from a PMU wakeup
-        {
-          sim3_pmu_pm9( rram_reg[0] );
-        }
+        sim3_pmu_pm9( rram_reg[0] );
         wake_reason = WAKE_RTC;
       }
     }
   }
   else if (((reset_status & SI32_RSTSRC_A_RESETFLAG_PORRF_MASK) == SI32_RSTSRC_A_RESETFLAG_PORRF_SET_U32)
     ||  ((reset_status & SI32_RSTSRC_A_RESETFLAG_VMONRF_MASK) == SI32_RSTSRC_A_RESETFLAG_VMONRF_SET_U32)
-    ||  ((reset_status & SI32_RSTSRC_A_RESETFLAG_PINRF_MASK) == SI32_RSTSRC_A_RESETFLAG_PINRF_SET_U32))
+    ||  ((reset_status & SI32_RSTSRC_A_RESETFLAG_PINRF_MASK) == SI32_RSTSRC_A_RESETFLAG_PINRF_SET_U32)
+    ||  ((pmu_status & SI32_PMU_A_STATUS_PORF_MASK) == SI32_PMU_A_STATUS_PORF_SET_U32) 
+    ||  ((pmu_wake_status & SI32_PMU_A_WAKESTATUS_RSTWF_MASK) == SI32_PMU_A_WAKESTATUS_RSTWF_SET_U32) )
   {
     //Fresh powerup! Reset our retained ram registers
     reset_parameters();
@@ -385,7 +399,10 @@ void SecondsTick_Handler()
   //Check if we are supposed to be sleeping
   if(rram_reg[0] > 0)
   {
-    rram_reg[0]--;
+    //Don't count down timer if buttons are depressed
+    if(!external_buttons())
+      rram_reg[0]--;
+
     if(rram_reg[0] == 0)
     {
       //Our timer has expired and we are still powered, start TX script
@@ -395,10 +412,13 @@ void SecondsTick_Handler()
       //Normally we would run the startup script, but fix memory leaks first...
       printf("startup %i\n", load_lua_function("autorun"));
     }
-    if(external_power() == 0)
+    if((external_power() == 0 && !external_buttons()) || rram_read_bit(RRAM_BIT_SLEEP_WHEN_POWERED) == SLEEP_WHEN_POWERED_ACTIVE)
     {
       printf("no power %i\n", rram_reg[0]);
-      //sim3_pmu_pm9( rram_reg[0] );
+      if(sleep_delay > 0)
+        sleep_delay--;
+      else
+        sim3_pmu_pm9( rram_reg[0] );
     }
     else
       printf("powered %i\n", rram_reg[0]);
@@ -428,7 +448,7 @@ void SysTick_Handler()
   cmn_systimer_periodic();
 
 #if defined( BUILD_USB_CDC )
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
+  /*if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
   {
     if( console_uart_id == CDC_UART_ID )
     {
@@ -443,7 +463,7 @@ void SysTick_Handler()
     console_uart_id = CON_UART_ID_FALLBACK;
   }
   else
-    console_uart_id = CDC_UART_ID;
+    console_uart_id = CDC_UART_ID;*/
 
   if( console_uart_id == CDC_UART_ID )
     usb_poll();
@@ -1396,9 +1416,11 @@ void myPB_enter_off_config()
   SI32_PBHD_A_disable_pullup_resistors( SI32_PBHD_4 );
   SI32_PBHD_A_write_pins_low( SI32_PBHD_4, 0x3F );
 
+#ifdef CHARGER_MOSFETS_PRESENT
   //Set the disconnects mosfets to float!
   SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0x04 );
   SI32_PBHD_A_write_pins_high( SI32_PBHD_4, 0x04 );
+#endif
 }
 
 
@@ -1406,9 +1428,10 @@ void sim3_pmu_pm9( unsigned seconds )
 {
   //u8 i;
 
-  if(seconds != TRICK_TO_REBOOT_WITHOUT_DFU_MODE && external_power())
+  if(seconds != TRICK_TO_REBOOT_WITHOUT_DFU_MODE && external_power() && rram_read_bit(RRAM_BIT_SLEEP_WHEN_POWERED) == SLEEP_WHEN_POWERED_DISABLED)
   {
     printf("Unit is powered, no PM9\n");
+    wake_reason = WAKE_POWERCONNECTED;
     rram_reg[0] = seconds;
     return;
   }
@@ -1421,7 +1444,13 @@ void sim3_pmu_pm9( unsigned seconds )
 
   // SET ALARM FOR now+s
   // RTC running at 16.384Khz so there are 16384 cycles/sec)
-  if( seconds > PIN_CHECK_INTERVAL )
+  if(rram_read_bit(RRAM_BIT_STORAGE_MODE) == STORAGE_MODE_ACTIVE)
+  {
+    //Sleep forever, in storage mode. Power button will wakeup device
+    rram_reg[0] = 0;
+    SI32_RTC_A_write_alarm0(SI32_RTC_0, 0xFFFFFFFF); //will wakeup in 3 days
+  }
+  else if( seconds > PIN_CHECK_INTERVAL )
   {
     rram_reg[0] = seconds - PIN_CHECK_INTERVAL;
     SI32_RTC_A_write_alarm0(SI32_RTC_0, /*SI32_RTC_A_read_setcap(SI32_RTC_0) +*/ (16384 * PIN_CHECK_INTERVAL));
@@ -1792,6 +1821,9 @@ int platform_usb_cdc_recv( s32 timeout )
 }
 
 #endif
+
+
+
 
 // ****************************************************************************
 // Platform specific modules go here

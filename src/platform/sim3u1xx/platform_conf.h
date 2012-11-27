@@ -198,12 +198,31 @@ u32 cmsis_get_cpu_frequency();
     _C( INT_GPS_TIMEOUT ), \
     _C( INT_SYSINIT )
 
-
-#define RRAM_FLAG_DEEP_SLEEP 0x80000000
-#define RRAM_FLAG_DEEP_SLEEP_MASK 0x7FFFFFFF
+#define RRAM_BIT_SOS 40
+  #define SOS_MODE_ACTIVE 1
+  #define SOS_MODE_DISABLED 0
+#define RRAM_BIT_CHECKIN 41
+  #define CHECKIN_MODE_ACTIVE 1
+  #define CHECKIN_MODE_DISABLED 0
+#define RRAM_BIT_POWEROFF 42
+  #define POWEROFF_MODE_ACTIVE 1
+  #define POWEROFF_MODE_DISABLED 0
+#define RRAM_BIT_STORAGE_MODE 43
+  #define STORAGE_MODE_ACTIVE 1
+  #define STORAGE_MODE_DISABLED 0
+#define RRAM_BIT_SLEEP_WHEN_POWERED 44
+  #define SLEEP_WHEN_POWERED_ACTIVE 1
+  #define SLEEP_WHEN_POWERED_DISABLED 0
 // Sleep Persistent SRAM Storage
 extern int rram_reg[8] __attribute__((section(".sret")));
-
+extern int rram_read_byte(int byte_number);
+extern void rram_write_byte(int byte_number, int value);
+extern int rram_read_bit(int bit_number);
+extern void rram_write_bit(int bit_number, int value);
+extern void button_down(int port, int pin);
+extern void button_up(int port, int pin);
+#define TRICK_TO_REBOOT_WITHOUT_DFU_MODE 0xFFFFFFFF
+void sim3_pmu_pm9( unsigned seconds );
 
 typedef enum {
     WAKE_UNKNOWN = 0x00,
@@ -215,7 +234,7 @@ typedef enum {
 
 } wake_type;
 
-extern wake_type wake_reason;
+extern int wake_reason;
 
 #endif // #ifndef __PLATFORM_CONF_H__
 

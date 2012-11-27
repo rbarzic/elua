@@ -515,11 +515,15 @@ int wofs_format()
   platform_flash_get_first_free_block_address( &sect_first );
   // Get the first free address in WOFS. We use this address to compute the last block that we need to
   // erase, instead of simply erasing everything from sect_first to the last Flash page. 
-  romfs_open_file( "\1", &tempfd, &wofs_fsdata, &sect_last, NULL );
-  sect_last = platform_flash_get_sector_of_address( sect_last + ( u32 )wofs_fsdata.pbase );
+  //romfs_open_file( "\1", &tempfd, &wofs_fsdata, &sect_last, NULL );
+  //sect_last = platform_flash_get_sector_of_address( sect_last + ( u32 )wofs_fsdata.pbase );
+  sect_last = (INTERNAL_FLASH_SIZE /  INTERNAL_FLASH_SECTOR_SIZE) - (INTERNAL_FLASH_START_ADDRESS / INTERNAL_FLASH_SECTOR_SIZE) - 1;
   while( sect_first <= sect_last )
+  {
+    printf("%lu %lu\n", sect_first, sect_last);
     if( platform_flash_erase_sector( sect_first ++ ) == PLATFORM_ERR )
       return 0;
+  }
   return 1;
 }
 
