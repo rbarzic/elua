@@ -121,7 +121,7 @@ void HardFault_Handler(void)
 }
 
 #if defined( BUILD_USB_CDC )
-unsigned console_uart_id = CON_UART_ID_FALLBACK;//CDC_UART_ID;
+unsigned console_uart_id = CON_UART_ID_HW_UART;//CDC_UART_ID;
 #endif
 
 
@@ -229,8 +229,8 @@ int platform_init()
 #if defined( BUILD_USB_CDC )
   //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 1 << 8 ) );
 
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
-    console_uart_id = CON_UART_ID_FALLBACK;
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 1 )
+    console_uart_id = CON_UART_ID_HW_UART;
 
   usb_init();
   hw_init();
@@ -452,15 +452,15 @@ void SysTick_Handler()
   {
     if( console_uart_id == CDC_UART_ID )
     {
-      if( CON_UART_ID_FALLBACK < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID_FALLBACK != CDC_UART_ID ) )
+      if( CON_UART_ID_HW_UART < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID_HW_UART != CDC_UART_ID ) )
       {
         // Setup console UART
-        platform_uart_setup( CON_UART_ID_FALLBACK, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
-        platform_uart_set_flow_control( CON_UART_ID_FALLBACK, PLATFORM_UART_FLOW_NONE );
-        platform_uart_set_buffer( CON_UART_ID_FALLBACK, CON_BUF_SIZE );
+        platform_uart_setup( CON_UART_ID_HW_UART, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
+        platform_uart_set_flow_control( CON_UART_ID_HW_UART, PLATFORM_UART_FLOW_NONE );
+        platform_uart_set_buffer( CON_UART_ID_HW_UART, CON_BUF_SIZE );
       }
     }
-    console_uart_id = CON_UART_ID_FALLBACK;
+    console_uart_id = CON_UART_ID_HW_UART;
   }
   else
     console_uart_id = CDC_UART_ID;*/
