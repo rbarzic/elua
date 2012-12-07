@@ -112,10 +112,10 @@ static int l_unpack(lua_State *L)               /** unpack(s,f,[init]) */
  {
   int c=*f++;
   int N=1;
-  if (isdigit(*f))
+  if (isdigit((int)(*f)))
   {
    N=0;
-   while (isdigit(*f)) N=10*N+(*f++)-'0';
+   while (isdigit((int)(*f))) N=10*N+(*f++)-'0';
    if (N==0 && c==OP_STRING) { lua_pushliteral(L,""); ++n; }
   }
   while (N--) switch (c)
@@ -209,10 +209,10 @@ static int l_pack(lua_State *L)                 /** pack(f,...) */
  {
   int c=*f++;
   int N=1;
-  if (isdigit(*f))
+  if (isdigit((int)(*f)))
   {
    N=0;
-   while (isdigit(*f)) N=10*N+(*f++)-'0';
+   while (isdigit((int)(*f))) N=10*N+(*f++)-'0';
   }
   while (N--) switch (c)
   {
