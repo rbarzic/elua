@@ -10,6 +10,7 @@
 
 #define lmathlib_c
 #define LUA_LIB
+#define LUA_CORE
 
 #include "lua.h"
 
