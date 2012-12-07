@@ -198,6 +198,9 @@ u32 cmsis_get_cpu_frequency();
     _C( INT_GPS_TIMEOUT ), \
     _C( INT_SYSINIT )
 
+#define RRAM_SIZE 8
+
+#define RRAM_INT_SLEEPTIME 0
 #define RRAM_BIT_SOS 40
   #define SOS_MODE_ACTIVE 1
   #define SOS_MODE_DISABLED 0
@@ -214,7 +217,9 @@ u32 cmsis_get_cpu_frequency();
   #define SLEEP_WHEN_POWERED_ACTIVE 1
   #define SLEEP_WHEN_POWERED_DISABLED 0
 // Sleep Persistent SRAM Storage
-extern int rram_reg[8] __attribute__((section(".sret")));
+extern int rram_reg[RRAM_SIZE] __attribute__((section(".sret")));
+extern int rram_read_int(int byte_number);
+extern void rram_write_int(int byte_number, int value);
 extern int rram_read_byte(int byte_number);
 extern void rram_write_byte(int byte_number, int value);
 extern int rram_read_bit(int bit_number);
