@@ -186,7 +186,7 @@ _ssize_t _write_r( struct _reent *r, int file, const void *ptr, size_t len )
 int _mkdir_r( struct _reent *r, const char *path, mkdir_mode_t mode )
 {
   char* actname;
-  int res, devid;
+  int devid;
   const DM_INSTANCE_DATA *pinst;
 
   // Look for device, return error if not found or if function not implemented
