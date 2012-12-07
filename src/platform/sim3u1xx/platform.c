@@ -48,7 +48,7 @@
 #define PIN_CHECK_INTERVAL 10
 int wake_reason = WAKE_UNKNOWN;
 
-int rram_reg[8] __attribute__((section(".sret")));
+int rram_reg[RRAM_SIZE] __attribute__((section(".sret")));
 static int rtc_remaining = 0;
 static u8 sleep_delay = 0;
 
@@ -166,7 +166,7 @@ void reset_parameters()
   int i;
   for(i=0;i<8;i++)
   {
-    rram_reg[i] = 0;
+    rram_write_int(i, 0);
   }
 }
 
@@ -262,11 +262,10 @@ int platform_init()
     else if((pmu_status & SI32_PMU_A_STATUS_PWAKEF_MASK) == (0 << SI32_PMU_A_STATUS_PWAKEF_SHIFT)) //Check for pin wake NOTE: SiLabs headers are wrong, this bit is backwards per the manual...
     {
       //Wakeup from WAKE pins, just reset reg[0] so we stay awake
-      //rram_reg[0] = 0;
       wake_reason = WAKE_WAKEPIN;
 
       //Put the remaining sleep time back into rram_reg[0]
-      rram_reg[0] += rtc_remaining;
+      rram_write_int(RRAM_INT_SLEEPTIME, rram_read_int(RRAM_INT_SLEEPTIME) + rtc_remaining);
 
       //Don't auto-sleep for some period of seconds
       sleep_delay = 5;
@@ -275,12 +274,12 @@ int platform_init()
     {
       if(rram_read_bit(RRAM_BIT_POWEROFF) == POWEROFF_MODE_ACTIVE)
       {
-        rram_reg[0] = 0x7FFFFFFF; //will wakeup in 68 years
+        rram_write_int(RRAM_INT_SLEEPTIME, 0x7FFFFFFF); //will wakeup in 68 years
       } 
       else if(rram_read_bit(RRAM_BIT_STORAGE_MODE) == STORAGE_MODE_ACTIVE)
       {
         //Sleep forever, in storage mode. Power button will wakeup device
-        rram_reg[0] = 0x7FFFFFFF; //will wakeup in 68 years
+        rram_write_int(RRAM_INT_SLEEPTIME, 0x7FFFFFFF); //will wakeup in 68 years
       } 
 
       if(external_buttons() || external_power())
@@ -289,9 +288,9 @@ int platform_init()
         //the appropriate script when it reaches zero
         wake_reason = WAKE_POWERCONNECTED;
       }
-      else if( rram_reg[0] > 0 )  //Go back to sleep if we woke from a PMU wakeup
+      else if( rram_read_int(RRAM_INT_SLEEPTIME) > 0 )  //Go back to sleep if we woke from a PMU wakeup
       {
-        sim3_pmu_pm9( rram_reg[0] );
+        sim3_pmu_pm9( rram_read_int(RRAM_INT_SLEEPTIME) );
         wake_reason = WAKE_RTC;
       }
     }
@@ -397,13 +396,13 @@ static u8 tickSeconds = 0;
 void SecondsTick_Handler()
 {
   //Check if we are supposed to be sleeping
-  if(rram_reg[0] > 0)
+  if(rram_read_int(RRAM_INT_SLEEPTIME) > 0)
   {
     //Don't count down timer if buttons are depressed
     if(!external_buttons())
-      rram_reg[0]--;
+      rram_write_int(RRAM_INT_SLEEPTIME, rram_read_int(RRAM_INT_SLEEPTIME)-1);
 
-    if(rram_reg[0] == 0)
+    if(rram_read_int(RRAM_INT_SLEEPTIME) == 0)
     {
       //Our timer has expired and we are still powered, start TX script
       //Do a software reboot UNTIL we get the memory leaks sorted out...
@@ -414,14 +413,14 @@ void SecondsTick_Handler()
     }
     if((external_power() == 0 && !external_buttons()) || rram_read_bit(RRAM_BIT_SLEEP_WHEN_POWERED) == SLEEP_WHEN_POWERED_ACTIVE)
     {
-      printf("no power %i\n", rram_reg[0]);
+      printf("no power %i\n", rram_read_int(RRAM_INT_SLEEPTIME));
       if(sleep_delay > 0)
         sleep_delay--;
       else
-        sim3_pmu_pm9( rram_reg[0] );
+        sim3_pmu_pm9( rram_read_int(RRAM_INT_SLEEPTIME) );
     }
     else
-      printf("powered %i\n", rram_reg[0]);
+      printf("powered %i\n", rram_read_int(RRAM_INT_SLEEPTIME));
   }
   if(firstSecond)
   {
@@ -1432,7 +1431,7 @@ void sim3_pmu_pm9( unsigned seconds )
   {
     printf("Unit is powered, no PM9\n");
     wake_reason = WAKE_POWERCONNECTED;
-    rram_reg[0] = seconds;
+    rram_write_int(RRAM_INT_SLEEPTIME, seconds);
     return;
   }
   if(seconds == TRICK_TO_REBOOT_WITHOUT_DFU_MODE)
@@ -1447,17 +1446,17 @@ void sim3_pmu_pm9( unsigned seconds )
   if(rram_read_bit(RRAM_BIT_STORAGE_MODE) == STORAGE_MODE_ACTIVE)
   {
     //Sleep forever, in storage mode. Power button will wakeup device
-    rram_reg[0] = 0;
+    rram_write_int(RRAM_INT_SLEEPTIME,  0);
     SI32_RTC_A_write_alarm0(SI32_RTC_0, 0xFFFFFFFF); //will wakeup in 3 days
   }
   else if( seconds > PIN_CHECK_INTERVAL )
   {
-    rram_reg[0] = seconds - PIN_CHECK_INTERVAL;
+    rram_write_int(RRAM_INT_SLEEPTIME, seconds - PIN_CHECK_INTERVAL);
     SI32_RTC_A_write_alarm0(SI32_RTC_0, /*SI32_RTC_A_read_setcap(SI32_RTC_0) +*/ (16384 * PIN_CHECK_INTERVAL));
   }
   else
   {
-    rram_reg[0] = 0;
+    rram_write_int(RRAM_INT_SLEEPTIME, 0);
     SI32_RTC_A_write_alarm0(SI32_RTC_0, /*SI32_RTC_A_read_setcap(SI32_RTC_0) +*/ (16384 * seconds));
   }
 
