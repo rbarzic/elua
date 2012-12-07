@@ -510,7 +510,7 @@ static FSDATA wofs_fsdata =
 int wofs_format()
 {
   u32 sect_first, sect_last;
-  FD tempfd;
+  //FD tempfd;
 
   platform_flash_get_first_free_block_address( &sect_first );
   // Get the first free address in WOFS. We use this address to compute the last block that we need to
