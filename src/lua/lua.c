@@ -174,14 +174,33 @@ static int incomplete (lua_State *L, int status) {
   return 0;  /* else... */
 }
 
+// #define lua_readline(L,b,p) \
+//   ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
+//   fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
+
+int slip_readline (lua_State *L, char *b, char *p)
+{
+return 0;
+}
+
+int spin_vm( lua_State *L )
+{
+  char *b = "function a () print('a') end a()";
+  lua_pushstring(L, b);
+  luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
+  lua_pcall (L, 0, 0, 0);
+  return 0;
+}
 
 static int pushline (lua_State *L, int firstline) {
   char buffer[LUA_MAXINPUT];
   char *b = buffer;
   size_t l;
   const char *prmt = get_prompt(L, firstline);
-  if (lua_readline(L, b, prmt) == 0)
-    return 0;  /* no input */
+  while (slip_readline(L, b, prmt) == 0)
+  {
+    spin_vm(L);
+  }
   l = strlen(b);
   if (l > 0 && b[l-1] == '\n')  /* line ends with newline? */
     b[l-1] = '\0';  /* remove it */
