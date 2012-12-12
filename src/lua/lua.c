@@ -180,12 +180,13 @@ static int incomplete (lua_State *L, int status) {
 
 int slip_readline (lua_State *L, char *b, char *p)
 {
+
 return 0;
 }
 
 int spin_vm( lua_State *L )
 {
-  char *b = "function a () print('a') end a()";
+  char *b = "function a () end a()";
   lua_pushstring(L, b);
   luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
   lua_pcall (L, 0, 0, 0);
@@ -197,6 +198,8 @@ static int pushline (lua_State *L, int firstline) {
   char *b = buffer;
   size_t l;
   const char *prmt = get_prompt(L, firstline);
+  fputs(prmt, stdout);
+  fflush(stdout);
   while (slip_readline(L, b, prmt) == 0)
   {
     spin_vm(L);
