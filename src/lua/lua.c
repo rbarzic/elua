@@ -10,6 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <termios.h>
+#include <sys/select.h>
+#include <unistd.h>
+
 #define lua_c
 
 #include "lua.h"
@@ -178,18 +182,51 @@ static int incomplete (lua_State *L, int status) {
 //   ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
 //   fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
 
-int slip_readline (lua_State *L, char *b, char *p)
+int is_key_pressed(void)
 {
+     struct timeval tv;
+     fd_set fds;
+     tv.tv_sec = 0;
+     tv.tv_usec = 10000;
 
-return 0;
+     FD_ZERO(&fds);
+     FD_SET(STDIN_FILENO, &fds); 
+
+     select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+     return FD_ISSET(STDIN_FILENO, &fds);
+}
+
+int slip_readline(lua_State *L, char *b, char *p)
+{
+  char *t = b;
+
+  while( 1 )
+  {
+    if( is_key_pressed() )
+    {
+      *t = getchar();
+      if( *t == '\n')
+      {
+        *++t = 0;
+        //printf("%s", b);
+        return 1;
+      }
+      t++;
+    }
+    else
+    {
+     spin_vm(L);
+    }
+  }
 }
 
 int spin_vm( lua_State *L )
 {
-  char *b = "function a () end a()";
-  lua_pushstring(L, b);
+  char *buf = "function a () io.write('.') end a()";
+  lua_pushstring(L, buf);
   luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
   lua_pcall (L, 0, 0, 0);
+  lua_remove(L, 1);
   return 0;
 }
 
@@ -200,10 +237,8 @@ static int pushline (lua_State *L, int firstline) {
   const char *prmt = get_prompt(L, firstline);
   fputs(prmt, stdout);
   fflush(stdout);
-  while (slip_readline(L, b, prmt) == 0)
-  {
-    spin_vm(L);
-  }
+  if (slip_readline(L, b, prmt) == 0)
+    return 0;  /* no input */
   l = strlen(b);
   if (l > 0 && b[l-1] == '\n')  /* line ends with newline? */
     b[l-1] = '\0';  /* remove it */
