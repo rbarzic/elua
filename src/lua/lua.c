@@ -13,6 +13,7 @@
 #include <termios.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define lua_c
 
@@ -186,8 +187,8 @@ int is_key_pressed(void)
 {
      struct timeval tv;
      fd_set fds;
-     tv.tv_sec = 0;
-     tv.tv_usec = 10000;
+     tv.tv_sec = 1;
+     tv.tv_usec = 0;
 
      FD_ZERO(&fds);
      FD_SET(STDIN_FILENO, &fds); 
@@ -200,29 +201,41 @@ int slip_readline(lua_State *L, char *b, char *p)
 {
   char *t = b;
 
-  while( 1 )
+  int fd = fileno(stdin);  
+  int flags;
+  flags = fcntl(fd, F_GETFL, 0); 
+  flags |= O_NONBLOCK; 
+  fcntl(fd, F_SETFL, flags); 
+
+  while( fgets(b, LUA_MAXINPUT, stdin) == NULL )
   {
-    if( is_key_pressed() )
-    {
-      *t = getchar();
-      if( *t == '\n')
-      {
-        *++t = 0;
-        //printf("%s", b);
-        return 1;
-      }
-      t++;
-    }
-    else
-    {
-     spin_vm(L);
-    }
+    spin_vm(L);
+    is_key_pressed();
   }
+  // while( 1 )
+  // {
+  //   if( is_key_pressed() )
+  //   {
+  //     *t = getchar();
+  //     if( *t == '\n' )
+  //     {
+  //       t++;
+  //       *t = 0;
+  //       //printf("%s", b);
+  //       return 1;
+  //     }
+  //     t++;
+  //   }
+  //   else
+  //   {
+  //    spin_vm(L);
+  //   }
+  // }
 }
 
 int spin_vm( lua_State *L )
 {
-  char *buf = "function a () io.write('.') end a()";
+  char *buf = "function a () io.write('.') io.flush() end a()";
   lua_pushstring(L, buf);
   luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
   lua_pcall (L, 0, 0, 0);
