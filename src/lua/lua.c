@@ -236,10 +236,10 @@ int slip_readline(lua_State *L, char *b, char *p)
 int spin_vm( lua_State *L )
 {
   char *buf = "function a () io.write('.') io.flush() end a()";
-  lua_pushstring(L, buf);
-  luaL_loadbuffer(L, lua_tostring(L, 1), lua_strlen(L, 1), "=stdin");
+  int n = lua_gettop(L);
+  luaL_loadbuffer(L, buf, strlen(buf), "=stdin");
   lua_pcall (L, 0, 0, 0);
-  lua_remove(L, 1);
+  lua_settop(L, n);
   return 0;
 }
 
