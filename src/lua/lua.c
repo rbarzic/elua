@@ -10,10 +10,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef LUA_RPC
 #include <termios.h>
 #include <sys/select.h>
 #include <unistd.h>
 #include <fcntl.h>
+#else
+//#include "platform_conf.h"
+#include "buf.h"
+#endif
 
 #define lua_c
 
@@ -22,7 +27,10 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-
+#ifndef LUA_RPC
+#include "platform_conf.h"
+#include "platform.h"
+#endif
 
 static lua_State *globalL = NULL;
 
@@ -183,6 +191,16 @@ static int incomplete (lua_State *L, int status) {
 //   ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
 //   fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
 
+#if defined( LUA_RPC )
+void setup_pipe( void )
+{
+  int fd = fileno(stdin);  
+  int flags;
+  flags = fcntl(fd, F_GETFL, 0); 
+  flags |= O_NONBLOCK; 
+  fcntl(fd, F_SETFL, flags); 
+}
+
 int is_key_pressed(void)
 {
      struct timeval tv;
@@ -201,37 +219,78 @@ int slip_readline(lua_State *L, char *b, char *p)
 {
   char *t = b;
 
-  int fd = fileno(stdin);  
-  int flags;
-  flags = fcntl(fd, F_GETFL, 0); 
-  flags |= O_NONBLOCK; 
-  fcntl(fd, F_SETFL, flags); 
+  setup_pipe();
 
   while( fgets(b, LUA_MAXINPUT, stdin) == NULL )
   {
     spin_vm(L);
     is_key_pressed();
   }
-  // while( 1 )
-  // {
-  //   if( is_key_pressed() )
-  //   {
-  //     *t = getchar();
-  //     if( *t == '\n' )
-  //     {
-  //       t++;
-  //       *t = 0;
-  //       //printf("%s", b);
-  //       return 1;
-  //     }
-  //     t++;
-  //   }
-  //   else
-  //   {
-  //    spin_vm(L);
-  //   }
-  // }
 }
+#else
+int std_prev_char = -1;
+#include "utils.h"
+int is_key_pressed(void)
+{
+  int tmp;
+  //Timer1 = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+  //tmp = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 100000 );
+  tmp = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 1000000 );
+  return tmp;
+}
+
+int slip_readline(lua_State *L, char *b, char *p)
+{
+  char *ptr = b;
+  int c;
+  int i = 0;
+
+  while( 1 )
+  {
+    if( std_prev_char != -1 )
+    {
+      c = std_prev_char;
+      std_prev_char = -1;
+    }
+    else
+      c = is_key_pressed();
+    if( c != -1 )
+    {
+      if( ( c == 8 ) || ( c == 0x7F ) ) // Backspace
+      {
+        if( i > 0 )
+        {
+          i --;
+          platform_uart_send( CON_UART_ID, 8 );
+          platform_uart_send( CON_UART_ID, ' ' );
+          platform_uart_send( CON_UART_ID, 8 );
+        }
+        continue;
+      }
+      if( !isprint( c ) && c != '\n' && c != '\r' && c != STD_CTRLZ_CODE )
+        continue;
+      if( c == STD_CTRLZ_CODE )
+        return 0;
+      platform_uart_send( CON_UART_ID, c );
+      if( c == '\r' || c == '\n' )
+      {
+        // Handle both '\r\n' and '\n\r' here
+        std_prev_char = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 10000 ); // consume the next char (\r or \n) if any
+        if( std_prev_char + c == '\r' + '\n' ) // we must ignore this character
+          std_prev_char = -1;
+        platform_uart_send( CON_UART_ID, '\r' + '\n' - c );
+        ptr[ i ] = '\n';
+        return i + 1;
+      }
+      ptr[ i ++ ] = c;
+    }
+    else
+    {
+     spin_vm(L);
+    }
+  }
+}
+#endif
 
 int spin_vm( lua_State *L )
 {
