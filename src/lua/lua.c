@@ -180,7 +180,7 @@ static int incomplete (lua_State *L, int status) {
 
 int spin_vm( lua_State *L )
 {
-  char *buf = "local function a () io.write('.') io.flush() end a()";
+  char *buf = "local function a () end a()";
   int n = lua_gettop(L);
   luaL_loadbuffer(L, buf, strlen(buf), "=stdin");
   lua_pcall (L, 0, 0, 0);
@@ -245,7 +245,7 @@ int slip_readline(lua_State *L, char *b, const char *p)
       repl_prev_char = -1;
     }
     else
-      c = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 1000000 );
+      c = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 0 );
 
     if( c != -1 )
     {
