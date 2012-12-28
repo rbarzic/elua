@@ -24,6 +24,8 @@
 
 #define ENABLE_PMU
 
+#define ENABLE_INTERACTIVE_AUTORUN
+
 #define PLATFORM_HAS_SYSTIMER
 
 // *****************************************************************************
