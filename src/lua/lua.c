@@ -9,16 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef LUA_RPC
-#include <termios.h>
-#include <sys/select.h>
-#include <unistd.h>
-#include <fcntl.h>
-#else
-//#include "platform_conf.h"
-#include "buf.h"
-#endif
+#include <ctype.h>
 
 #define lua_c
 
@@ -187,9 +178,15 @@ static int incomplete (lua_State *L, int status) {
   return 0;  /* else... */
 }
 
-// #define lua_readline(L,b,p) \
-//   ((void)L, fputs(p, stdout), fflush(stdout),  /* show prompt */ \
-//   fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
+int spin_vm( lua_State *L )
+{
+  char *buf = "function a () io.write('.') io.flush() end a()";
+  int n = lua_gettop(L);
+  luaL_loadbuffer(L, buf, strlen(buf), "=stdin");
+  lua_pcall (L, 0, 0, 0);
+  lua_settop(L, n);
+  return 0;
+}
 
 #if defined( LUA_RPC )
 // void setup_pipe( void )
@@ -234,7 +231,7 @@ static int incomplete (lua_State *L, int status) {
 int repl_prev_char = -1;
 #include "utils.h"
 
-int slip_readline(lua_State *L, char *b, char *p)
+int slip_readline(lua_State *L, char *b, const char *p)
 {
   char *ptr = b;
   int c;
@@ -289,15 +286,7 @@ int slip_readline(lua_State *L, char *b, char *p)
 }
 #endif
 
-int spin_vm( lua_State *L )
-{
-  char *buf = "function a () io.write('.') io.flush() end a()";
-  int n = lua_gettop(L);
-  luaL_loadbuffer(L, buf, strlen(buf), "=stdin");
-  lua_pcall (L, 0, 0, 0);
-  lua_settop(L, n);
-  return 0;
-}
+
 
 static int pushline (lua_State *L, int firstline) {
   char buffer[LUA_MAXINPUT];
