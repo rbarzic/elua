@@ -272,7 +272,8 @@ int slip_readline(lua_State *L, char *b, char *p)
         if( repl_prev_char + c == '\r' + '\n' ) // we must ignore this character
           repl_prev_char = -1;
         platform_uart_send( CON_UART_ID, '\r' + '\n' - c );
-        ptr[ i ] = '\n';
+        ptr[ i ++ ] = '\n';
+        ptr[ i ] = 0;
         return i + 1;
       }
       ptr[ i ++ ] = c;
