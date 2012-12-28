@@ -228,16 +228,8 @@ int slip_readline(lua_State *L, char *b, char *p)
   }
 }
 #else
-int std_prev_char = -1;
+int repl_prev_char = -1;
 #include "utils.h"
-int is_key_pressed(void)
-{
-  int tmp;
-  //Timer1 = platform_timer_read( PLATFORM_TIMER_SYS_ID );
-  //tmp = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 100000 );
-  tmp = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 1000000 );
-  return tmp;
-}
 
 int slip_readline(lua_State *L, char *b, char *p)
 {
@@ -247,13 +239,14 @@ int slip_readline(lua_State *L, char *b, char *p)
 
   while( 1 )
   {
-    if( std_prev_char != -1 )
+    if( repl_prev_char != -1 )
     {
-      c = std_prev_char;
-      std_prev_char = -1;
+      c = repl_prev_char;
+      repl_prev_char = -1;
     }
     else
-      c = is_key_pressed();
+      c = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 1000000 );
+
     if( c != -1 )
     {
       if( ( c == 8 ) || ( c == 0x7F ) ) // Backspace
@@ -275,9 +268,9 @@ int slip_readline(lua_State *L, char *b, char *p)
       if( c == '\r' || c == '\n' )
       {
         // Handle both '\r\n' and '\n\r' here
-        std_prev_char = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 10000 ); // consume the next char (\r or \n) if any
-        if( std_prev_char + c == '\r' + '\n' ) // we must ignore this character
-          std_prev_char = -1;
+        repl_prev_char = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 10000 ); // consume the next char (\r or \n) if any
+        if( repl_prev_char + c == '\r' + '\n' ) // we must ignore this character
+          repl_prev_char = -1;
         platform_uart_send( CON_UART_ID, '\r' + '\n' - c );
         ptr[ i ] = '\n';
         return i + 1;
