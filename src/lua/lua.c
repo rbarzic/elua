@@ -192,41 +192,44 @@ static int incomplete (lua_State *L, int status) {
 //   fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
 
 #if defined( LUA_RPC )
-void setup_pipe( void )
-{
-  int fd = fileno(stdin);  
-  int flags;
-  flags = fcntl(fd, F_GETFL, 0); 
-  flags |= O_NONBLOCK; 
-  fcntl(fd, F_SETFL, flags); 
-}
+// void setup_pipe( void )
+// {
+//   int fd = fileno(stdin);  
+//   int flags;
+//   flags = fcntl(fd, F_GETFL, 0); 
+//   flags |= O_NONBLOCK; 
+//   fcntl(fd, F_SETFL, flags); 
+// }
 
-int is_key_pressed(void)
-{
-     struct timeval tv;
-     fd_set fds;
-     tv.tv_sec = 1;
-     tv.tv_usec = 0;
+// int is_key_pressed(void)
+// {
+//      struct timeval tv;
+//      fd_set fds;
+//      tv.tv_sec = 1;
+//      tv.tv_usec = 0;
 
-     FD_ZERO(&fds);
-     FD_SET(STDIN_FILENO, &fds); 
+//      FD_ZERO(&fds);
+//      FD_SET(STDIN_FILENO, &fds); 
 
-     select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
-     return FD_ISSET(STDIN_FILENO, &fds);
-}
+//      select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+//      return FD_ISSET(STDIN_FILENO, &fds);
+// }
 
-int slip_readline(lua_State *L, char *b, char *p)
-{
-  char *t = b;
+// int slip_readline(lua_State *L, char *b, char *p)
+// {
+//   char *t = b;
 
-  setup_pipe();
+//   setup_pipe();
 
-  while( fgets(b, LUA_MAXINPUT, stdin) == NULL )
-  {
-    spin_vm(L);
-    is_key_pressed();
-  }
-}
+//   while( fgets(b, LUA_MAXINPUT, stdin) == NULL )
+//   {
+//     spin_vm(L);
+//     is_key_pressed();
+//   }
+// }
+#define slip_readline(L,b,p) \
+  ((void)L, \
+  fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
 #else
 int repl_prev_char = -1;
 #include "utils.h"

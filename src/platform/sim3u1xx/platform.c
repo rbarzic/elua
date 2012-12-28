@@ -448,7 +448,7 @@ void SysTick_Handler()
   cmn_systimer_periodic();
 
 #if defined( BUILD_USB_CDC )
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
+  /*if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
   {
     if( console_uart_id == CDC_UART_ID )
     {
@@ -463,9 +463,9 @@ void SysTick_Handler()
     console_uart_id = CON_UART_ID_HW_UART;
   }
   else
-    console_uart_id = CDC_UART_ID;
+    console_uart_id = CDC_UART_ID;*/
 
-  //if( console_uart_id == CDC_UART_ID )
+  if( console_uart_id == CDC_UART_ID )
     usb_poll();
 #endif
 
