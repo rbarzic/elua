@@ -108,7 +108,11 @@ int main( void )
     if( ( fp = fopen( boot_order[ i ], "r" ) ) != NULL )
     {
       fclose( fp );
-      char* lua_argv[] = { "lua", boot_order[i], NULL };
+#ifdef ENABLE_INTERACTIVE_AUTORUN
+      char* lua_argv[] = { "lua", "-i" , boot_order[i], NULL };
+#else
+      char* lua_argv[] = { "lua" , boot_order[i], NULL };
+#endif
       lua_main( 2, lua_argv );
       break; // autoruns only the first found
     }

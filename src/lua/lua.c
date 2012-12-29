@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define lua_c
 
@@ -17,7 +18,10 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-
+#ifndef LUA_RPC
+#include "platform_conf.h"
+#include "platform.h"
+#endif
 
 static lua_State *globalL = NULL;
 
@@ -174,13 +178,124 @@ static int incomplete (lua_State *L, int status) {
   return 0;  /* else... */
 }
 
+int spin_vm( lua_State *L )
+{
+  char *buf = "local function a () end a()";
+  int n = lua_gettop(L);
+  luaL_loadbuffer(L, buf, strlen(buf), "=stdin");
+  lua_pcall (L, 0, 0, 0);
+  lua_settop(L, n);
+  return 0;
+}
+
+#if defined( LUA_RPC )
+// void setup_pipe( void )
+// {
+//   int fd = fileno(stdin);  
+//   int flags;
+//   flags = fcntl(fd, F_GETFL, 0); 
+//   flags |= O_NONBLOCK; 
+//   fcntl(fd, F_SETFL, flags); 
+// }
+
+// int is_key_pressed(void)
+// {
+//      struct timeval tv;
+//      fd_set fds;
+//      tv.tv_sec = 1;
+//      tv.tv_usec = 0;
+
+//      FD_ZERO(&fds);
+//      FD_SET(STDIN_FILENO, &fds); 
+
+//      select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+//      return FD_ISSET(STDIN_FILENO, &fds);
+// }
+
+// int slip_readline(lua_State *L, char *b, char *p)
+// {
+//   char *t = b;
+
+//   setup_pipe();
+
+//   while( fgets(b, LUA_MAXINPUT, stdin) == NULL )
+//   {
+//     spin_vm(L);
+//     is_key_pressed();
+//   }
+// }
+#define slip_readline(L,b,p) \
+  ((void)L, \
+  fgets(b, LUA_MAXINPUT, stdin) != NULL)  /* get line */
+#else
+int repl_prev_char = -1;
+#include "utils.h"
+
+int slip_readline(lua_State *L, char *b, const char *p)
+{
+  char *ptr = b;
+  int c;
+  int i = 0;
+
+  while( 1 )
+  {
+    if( repl_prev_char != -1 )
+    {
+      c = repl_prev_char;
+      repl_prev_char = -1;
+    }
+    else
+      c = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 0 );
+
+    if( c != -1 )
+    {
+      if( ( c == 8 ) || ( c == 0x7F ) ) // Backspace
+      {
+        if( i > 0 )
+        {
+          i --;
+          platform_uart_send( CON_UART_ID, 8 );
+          platform_uart_send( CON_UART_ID, ' ' );
+          platform_uart_send( CON_UART_ID, 8 );
+        }
+        continue;
+      }
+      if( !isprint( c ) && c != '\n' && c != '\r' && c != STD_CTRLZ_CODE )
+        continue;
+      if( c == STD_CTRLZ_CODE )
+        return 0;
+      platform_uart_send( CON_UART_ID, c );
+      if( c == '\r' || c == '\n' )
+      {
+        // Handle both '\r\n' and '\n\r' here
+        repl_prev_char = platform_uart_recv( CON_UART_ID, PLATFORM_TIMER_SYS_ID, 10000 ); // consume the next char (\r or \n) if any
+        if( repl_prev_char + c == '\r' + '\n' ) // we must ignore this character
+          repl_prev_char = -1;
+        platform_uart_send( CON_UART_ID, '\r' + '\n' - c );
+        ptr[ i ++ ] = '\n';
+        ptr[ i ] = 0;
+        return i + 1;
+      }
+      ptr[ i ++ ] = c;
+    }
+    else
+    {
+     spin_vm(L);
+    }
+  }
+}
+#endif
+
+
 
 static int pushline (lua_State *L, int firstline) {
   char buffer[LUA_MAXINPUT];
   char *b = buffer;
   size_t l;
   const char *prmt = get_prompt(L, firstline);
-  if (lua_readline(L, b, prmt) == 0)
+  fputs(prmt, stdout);
+  fflush(stdout);
+  if (slip_readline(L, b, prmt) == 0)
     return 0;  /* no input */
   l = strlen(b);
   if (l > 0 && b[l-1] == '\n')  /* line ends with newline? */
