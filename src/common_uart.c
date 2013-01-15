@@ -42,13 +42,35 @@ int platform_uart_exists( unsigned id )
 // Helper function for buffers
 static int cmn_recv_helper( unsigned id, timer_data_type timeout )
 {
+  int ret;
 #ifdef BUF_ENABLE_UART
   t_buf_data data;
 #endif
 
 #ifdef BUILD_USB_CDC
-  if( id == CDC_UART_ID )
-    return platform_usb_cdc_recv( timeout );
+  //read usb serial port if it is active
+  if( console_cdc_active )
+  {
+    ret = platform_usb_cdc_recv( timeout );
+    if(ret >= 0)
+      return ret;
+  }
+#endif
+#if defined( CONSOLE2_ENABLE )
+  //read from second uart
+#ifdef BUF_ENABLE_UART
+  if( buf_is_enabled( BUF_ID_UART, CON2_UART_ID ) )
+  {
+      if ( ( buf_read( BUF_ID_UART, CON2_UART_ID, &data ) ) != PLATFORM_UNDERFLOW )
+        return ( int )data;
+  }
+  else
+#endif // #ifdef BUF_ENABLE_UART
+  {
+    ret = platform_s_uart_recv( CON2_UART_ID, timeout );
+    if(ret >= 0)
+      return ret;
+  }
 #endif
 
 #ifdef BUF_ENABLE_UART
@@ -141,8 +163,11 @@ static void cmn_rx_handler( int usart_id, u8 data )
 void platform_uart_send( unsigned id, u8 data ) 
 {
 #ifdef BUILD_USB_CDC
-  if( id == CDC_UART_ID )
+  if( console_cdc_active )
     platform_usb_cdc_send( data );
+#endif
+#if defined( CONSOLE2_ENABLE )
+  platform_s_uart_send( CON2_UART_ID, data ); //Send to second serial port too
 #endif
 #ifdef BUILD_SERMUX
   if( id >= SERMUX_SERVICE_ID_FIRST && id < SERMUX_SERVICE_ID_FIRST + SERMUX_NUM_VUART )

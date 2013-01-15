@@ -121,7 +121,8 @@ void HardFault_Handler(void)
 }
 
 #if defined( BUILD_USB_CDC )
-unsigned console_uart_id = CON_UART_ID_HW_UART;//CDC_UART_ID;
+unsigned console_uart_id = CON_UART_ID_HW_UART;
+unsigned console_cdc_active = 0;
 #endif
 
 
@@ -227,10 +228,17 @@ int platform_init()
 #endif
 
 #if defined( BUILD_USB_CDC )
-  //SI32_PBSTD_A_write_pins_low( SI32_PBSTD_3, ( 1 << 8 ) );
+  // Setup console UART
+  platform_uart_setup( CON_UART_ID_HW_UART, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
+  platform_uart_set_flow_control( CON_UART_ID_HW_UART, PLATFORM_UART_FLOW_NONE );
+  platform_uart_set_buffer( CON_UART_ID_HW_UART, CON_BUF_SIZE );
 
-  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 1 )
-    console_uart_id = CON_UART_ID_HW_UART;
+#if defined( CONSOLE2_ENABLE )
+  // Setup console2 UART
+  platform_uart_setup( CON2_UART_ID, CON2_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
+  platform_uart_set_flow_control( CON2_UART_ID, PLATFORM_UART_FLOW_NONE );
+  platform_uart_set_buffer( CON2_UART_ID, CON_BUF_SIZE );
+#endif
 
   usb_init();
   hw_init();
@@ -239,8 +247,8 @@ int platform_init()
   cdc_init();
 
   // register the rx handler function with the cdc
-  //cdc_reg_rx_handler(NULL);
-#endif
+  cdc_reg_rx_handler(NULL);
+#endif //defined( BUILD_USB_CDC )
 
   // Common platform initialization code
   cmn_platform_init();
@@ -447,24 +455,13 @@ void SysTick_Handler()
   cmn_systimer_periodic();
 
 #if defined( BUILD_USB_CDC )
-  /*if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) == 0 )
-  {
-    if( console_uart_id == CDC_UART_ID )
-    {
-      if( CON_UART_ID_HW_UART < SERMUX_SERVICE_ID_FIRST && ( CON_UART_ID_HW_UART != CDC_UART_ID ) )
-      {
-        // Setup console UART
-        platform_uart_setup( CON_UART_ID_HW_UART, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
-        platform_uart_set_flow_control( CON_UART_ID_HW_UART, PLATFORM_UART_FLOW_NONE );
-        platform_uart_set_buffer( CON_UART_ID_HW_UART, CON_BUF_SIZE );
-      }
-    }
-    console_uart_id = CON_UART_ID_HW_UART;
-  }
+  //Check if USB is powered. It will not actually TX/RX unless enumerated though
+  if( ( SI32_PBSTD_A_read_pins( SI32_PBSTD_3 ) & ( 1 << 8 ) ) )
+    console_cdc_active = 1;
   else
-    console_uart_id = CDC_UART_ID;*/
+    console_cdc_active = 0;
 
-  if( console_uart_id == CDC_UART_ID )
+  if( console_cdc_active )
     usb_poll();
 #endif
 
@@ -1405,7 +1402,11 @@ void myPB_enter_off_config()
   //Set I2C pins to analog float...
   SI32_PBSTD_A_set_pins_analog( SI32_PBSTD_0, 0x0000C000);
   SI32_PBSTD_A_write_pins_low( SI32_PBSTD_0, 0xC000 );
-
+  //Set bluetooth pins to analog float...
+  //SI32_PBSTD_A_set_pins_analog( SI32_PBSTD_1, 0x00000080);
+  //SI32_PBSTD_A_write_pins_high( SI32_PBSTD_1, 0x0080 );
+  //SI32_PBSTD_A_set_pins_push_pull_output( SI32_PBSTD_1, 0x0080);
+  
 
   SI32_PBHD_A_set_pins_push_pull_output( SI32_PBHD_4, 0x00 );
   SI32_PBHD_A_set_pins_low_drive_strength(SI32_PBHD_4, 0x3F);
@@ -1789,34 +1790,30 @@ unsigned platform_get_console_uart( void )
 
 void platform_usb_cdc_send( u8 data )
 {
-    usb_pcb_t *pcb = usb_pcb_get();
+  usb_pcb_t *pcb = usb_pcb_get();
 
-    if (!(pcb->flags & (1<<ENUMERATED)))
-    {
-        return;
-    }
-  
-    usb_buf_write(EP_1, (U8)data);
-    ep_write(EP_1);
+  if (!(pcb->flags & (1<<ENUMERATED)))
+  {
+      return;
+  }
+  if(usb_buf_space(EP_1) == 0)
+      return;
+    
+  if(usb_buf_write(EP_1, (U8)data) == 0);
+    usb_poll();//ep_write(EP_1);
 }
 
 int platform_usb_cdc_recv( s32 timeout )
 {
-  u8 data = 0;
   usb_pcb_t *pcb = usb_pcb_get();
 
   if (!(pcb->flags & (1<<ENUMERATED)))
       return -1;
 
-  do {
-    if( pcb->fifo[EP_3].len > 0 )
-      data = usb_buf_read(EP_3);
-  } while( data == 0 && timeout != 0 );
-
-  if( data == 0 )
-    return -1;
+  if(/*usb_buf_bytes(EP_3)*/pcb->fifo[EP_3].len > 0 )
+    return usb_buf_read(EP_3);
   else
-    return data;
+    return -1;
 }
 
 #endif
