@@ -1051,6 +1051,10 @@ static SI32_I2C_A_Type* const i2cs[] = { SI32_I2C_0, SI32_I2C_1 };
 #define  I2C_WRITE          0x00           // I2C WRITE command
 #define  I2C_READ           0x01           // I2C READ command
 
+#define I2C_TIMEOUT_US 100000
+
+static volatile timer_data_type i2c_start_time = 0;
+
 u32 platform_i2c_setup( unsigned id, u32 speed )
 {
   SI32_I2C_A_set_scaler_value( i2cs[ id ], ( cmsis_get_cpu_frequency() / speed ) );
@@ -1078,7 +1082,13 @@ void platform_i2c_send_start( unsigned id )
   if( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) )
     SI32_I2C_A_clear_rx_interrupt ( i2cs[ id ] );
 
-  while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
+  i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+  while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 &&
+         platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+  if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return;
 #if defined( DEBUG_I2C )
   printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
@@ -1103,7 +1113,14 @@ void platform_i2c_send_stop( unsigned id )
     printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
 
-    while( SI32_I2C_A_is_stop_interrupt_pending( i2cs[ id ] ) == 0 );
+
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_stop_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return;
 
     SI32_I2C_A_clear_stop( i2cs[ id ] );
     SI32_I2C_A_send_nack ( i2cs[ id ] );
@@ -1132,7 +1149,13 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
 #if defined( DEBUG_I2C )
     printf("CONTROL = %lx\n",  i2cs[ id ]->CONTROL.u32 );
 #endif
-    while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 );
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_start_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return 0;
 
     //SI32_I2C_A_set_slave_address_7_bit( i2cs[ id ] );
     SI32_I2C_A_set_byte_count( i2cs[ id ] , 1);
@@ -1143,7 +1166,14 @@ int platform_i2c_send_address( unsigned id, u16 address, int direction )
     SI32_I2C_A_clear_start_interrupt( i2cs[ id ] );
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
 
-    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
+
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return 0;
 
     acktmp = ( u8 )SI32_I2C_A_is_ack_received( i2cs[ id ] );
 
@@ -1181,7 +1211,13 @@ int platform_i2c_send_byte( unsigned id, u8 data )
     SI32_I2C_A_arm_tx( i2cs[ id ] );
     SI32_I2C_A_clear_tx_interrupt( i2cs[ id ] );
 
-    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 );
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return 0;
 
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
 
@@ -1219,7 +1255,13 @@ int platform_i2c_recv_byte( unsigned id, int ack )
     else if( SI32_I2C_A_is_tx_interrupt_pending( i2cs[ id ] ) )
       SI32_I2C_A_clear_tx_interrupt ( i2cs[ id ] );
 
-    while( SI32_I2C_A_is_ack_interrupt_pending( i2cs[ id ] ) == 0 );
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_ack_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return 0;
 
     if( ack )
       SI32_I2C_A_send_ack( i2cs[ id ] );
@@ -1228,7 +1270,13 @@ int platform_i2c_recv_byte( unsigned id, int ack )
 
     SI32_I2C_A_clear_ack_interrupt( i2cs[ id ] );
 
-    while( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) == 0 );
+    i2c_start_time = platform_timer_read( PLATFORM_TIMER_SYS_ID );
+
+    while( SI32_I2C_A_is_rx_interrupt_pending( i2cs[ id ] ) == 0 &&
+           platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) < I2C_TIMEOUT_US );
+
+    if( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, i2c_start_time ) > I2C_TIMEOUT_US )
+      return 0;
 
     tmpdata = SI32_I2C_A_read_data( i2cs[ id ] );
 #if defined( DEBUG_I2C )
