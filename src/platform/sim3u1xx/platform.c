@@ -1876,29 +1876,29 @@ int platform_usb_cdc_recv( s32 timeout )
 
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
-#ifdef ENABLE_PMU
+#ifdef ENABLE_PMU_23
 extern const LUA_REG_TYPE pmu_map[];
 #endif
 
-#if defined( EXTRA_LIBS_INCLUDE )
-#include "extra_libs.h"
-#endif
+// #if defined( EXTRA_LIBS_INCLUDE )
+// #include "extra_libs.h"
+// #endif
 
-#if defined( SIM3_EXTRA_LIBS_ROM ) && LUA_OPTIMIZE_MEMORY == 2
-#define _EXTRAROM( name, openf, table ) extern const LUA_REG_TYPE table[];
-SIM3_EXTRA_LIBS_ROM;
-#endif
+// #if defined( SIM3_EXTRA_LIBS_ROM ) && LUA_OPTIMIZE_MEMORY == 2
+// #define _EXTRAROM( name, openf, table ) extern const LUA_REG_TYPE table[];
+// SIM3_EXTRA_LIBS_ROM;
+// #endif
 
 const LUA_REG_TYPE platform_map[] =
 {
-#if LUA_OPTIMIZE_MEMORY > 0
-  { LSTRKEY( "pmu" ), LROVAL( pmu_map ) },
-#if defined(SIM3_EXTRA_LIBS_ROM)
-#undef _EXTRAROM
-#define _EXTRAROM( name, openf, table ) { LSTRKEY( #name ), LROVAL( table ) },
-  SIM3_EXTRA_LIBS_ROM
-#endif
-#endif
+//#if LUA_OPTIMIZE_MEMORY > 0
+  //{ LSTRKEY( "pmu" ), LROVAL( pmu_map ) },
+// #if defined(SIM3_EXTRA_LIBS_ROM)
+// #undef _EXTRAROM
+// #define _EXTRAROM( name, openf, table ) { LSTRKEY( #name ), LROVAL( table ) },
+//   SIM3_EXTRA_LIBS_ROM
+// #endif
+// #endif
   { LNILKEY, LNILVAL }
 };
 
@@ -1913,9 +1913,9 @@ LUALIB_API int luaopen_platform( lua_State *L )
   luaL_register( L, PS_LIB_TABLE_NAME, platform_map );
 
   // Setup the new tables inside platform table
-  lua_newtable( L );
-  luaL_register( L, NULL, pmu_map );
-  lua_setfield( L, -2, "pmu" );
+  // lua_newtable( L );
+  // luaL_register( L, NULL, pmu_map );
+  // lua_setfield( L, -2, "pmu" );
 
 #if defined( SIM3_EXTRA_LIBS_ROM )
 #undef _EXTRAROM

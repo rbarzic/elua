@@ -6,6 +6,7 @@
 #include "auxmods.h"
 #include "stacks.h"
 #include "type.h"
+#include "extra_libs.h"
 
 // *****************************************************************************
 // Define here what components you want for this platform
@@ -96,7 +97,12 @@ extern unsigned platform_get_console_uart( void );
   RPCLINE\
   _ROM( LUA_MATHLIBNAME, luaopen_math, math_map )\
   _ROM( AUXLIB_ELUA, luaopen_elua, elua_map )\
+  _ROM( "pmu", luaopen_pmu, pmu_map )\
+  SIM3_EXTRA_LIBS_ROM\
   PLATLINE
+
+LUALIB_API int ( luaopen_pmu )( lua_State *L );
+
 
 // *****************************************************************************
 // Configuration data
