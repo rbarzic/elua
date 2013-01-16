@@ -282,12 +282,12 @@ int platform_init()
     {
       if(rram_read_bit(RRAM_BIT_POWEROFF) == POWEROFF_MODE_ACTIVE)
       {
-        rram_write_int(RRAM_INT_SLEEPTIME, 0x7FFFFFFF); //will wakeup in 68 years
+        rram_write_int(RRAM_INT_SLEEPTIME, SLEEP_FOREVER); //will wakeup in 68 years
       } 
       else if(rram_read_bit(RRAM_BIT_STORAGE_MODE) == STORAGE_MODE_ACTIVE)
       {
         //Sleep forever, in storage mode. Power button will wakeup device
-        rram_write_int(RRAM_INT_SLEEPTIME, 0x7FFFFFFF); //will wakeup in 68 years
+        rram_write_int(RRAM_INT_SLEEPTIME, SLEEP_FOREVER); //will wakeup in 68 years
       } 
 
       if(external_buttons() || external_power())
@@ -407,7 +407,7 @@ void SecondsTick_Handler()
   if(rram_read_int(RRAM_INT_SLEEPTIME) > 0)
   {
     //Don't count down timer if buttons are depressed
-    if(!external_buttons())
+    if(!external_buttons() && rram_read_int(RRAM_INT_SLEEPTIME) != SLEEP_FOREVER)
       rram_write_int(RRAM_INT_SLEEPTIME, rram_read_int(RRAM_INT_SLEEPTIME)-1);
 
     if(rram_read_int(RRAM_INT_SLEEPTIME) == 0)
@@ -427,7 +427,7 @@ void SecondsTick_Handler()
       else
         sim3_pmu_pm9( rram_read_int(RRAM_INT_SLEEPTIME) );
     }
-    else
+    else if(rram_read_int(RRAM_INT_SLEEPTIME) != SLEEP_FOREVER)
       printf("powered %i\n", rram_read_int(RRAM_INT_SLEEPTIME));
   }
   if(firstSecond)
@@ -627,6 +627,18 @@ void pios_init( void )
   // SI32_PBHD_A_enable_n_channel_drivers(SI32_PBHD_4, 0x003F);
   // SI32_PBHD_A_enable_p_channel_drivers(SI32_PBHD_4, 0x003F);
   // SI32_PBHD_A_enable_pin_current_limit(SI32_PBHD_4, 0x003F);
+
+  //Enable blue LED's if we are on or just in a PM9 temporary sleep...
+  if(rram_read_bit(RRAM_BIT_POWEROFF) == POWEROFF_MODE_ACTIVE)
+  {
+    SI32_PBHD_A_write_pins_low( SI32_PBHD_4, 0x02 );
+    SI32_PBHD_A_write_pins_low( SI32_PBHD_4, 0x08 );
+  }
+  else 
+  {
+    SI32_PBHD_A_write_pins_high( SI32_PBHD_4, 0x02 );
+    SI32_PBHD_A_write_pins_high( SI32_PBHD_4, 0x08 );
+  }
 }
 
 

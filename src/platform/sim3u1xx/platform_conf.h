@@ -240,6 +240,7 @@ extern void rram_write_bit(int bit_number, int value);
 extern void button_down(int port, int pin);
 extern void button_up(int port, int pin);
 #define TRICK_TO_REBOOT_WITHOUT_DFU_MODE 0xFFFFFFFF
+#define SLEEP_FOREVER 0x7FFFFFFF
 void sim3_pmu_pm9( unsigned seconds );
 
 typedef enum {
