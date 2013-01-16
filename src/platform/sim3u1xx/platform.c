@@ -1303,8 +1303,16 @@ int platform_i2c_recv_byte( unsigned id, int ack )
 // ****************************************************************************
 // PMU functions
 
+#ifdef EXTRA_SLEEP_HOOK
+extern void extras_sleep_hook( void );
+#endif
+
 void sim3_pmu_sleep( unsigned seconds )
 {
+  #ifdef EXTRA_SLEEP_HOOK
+    extras_sleep_hook();
+  #endif
+
   // GET CURRENT TIMER VALUE INTO SETCAP
   SI32_RTC_A_start_timer_capture(SI32_RTC_0);
   while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
@@ -1472,6 +1480,7 @@ void myPB_enter_off_config()
 }
 
 
+
 void sim3_pmu_pm9( unsigned seconds )
 {
   //u8 i;
@@ -1485,6 +1494,10 @@ void sim3_pmu_pm9( unsigned seconds )
   }
   if(seconds == TRICK_TO_REBOOT_WITHOUT_DFU_MODE)
     seconds = 1;
+
+#ifdef EXTRA_SLEEP_HOOK
+  extras_sleep_hook();
+#endif
 
   // GET CURRENT TIMER VALUE INTO SETCAP
   //SI32_RTC_A_start_timer_capture(SI32_RTC_0);
