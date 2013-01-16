@@ -75,6 +75,10 @@ void boot_rpc( void )
 // ****************************************************************************
 //  Program entry point
 
+#ifdef EXTRA_STARTUP_HOOK
+extern void extras_init();
+#endif
+
 int main( void )
 {
   int i;
@@ -101,6 +105,11 @@ int main( void )
 
   // Register the remote filesystem
   remotefs_init();
+
+#ifdef EXTRA_STARTUP_HOOK
+  // Init Extras
+  extras_init();
+#endif
 
   // Search for autorun files in the defined order and execute the 1st if found
   for( i = 0; i < sizeof( boot_order ) / sizeof( *boot_order ); i++ )
