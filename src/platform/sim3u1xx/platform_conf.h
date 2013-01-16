@@ -72,9 +72,9 @@ extern unsigned platform_get_console_uart( void );
 #endif
 
 // The name of the platform specific libs table
-#ifdef ENABLE_PMU
-#define PS_LIB_TABLE_NAME "sim3"
-#endif
+// #ifdef ENABLE_PMU
+// #define PS_LIB_TABLE_NAME "sim3"
+// #endif
 
 
 #ifdef PS_LIB_TABLE_NAME
