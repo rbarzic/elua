@@ -79,7 +79,7 @@ static int xmodem_recv( timer_data_type timeout )
 
 #ifdef BUILD_TERM
 
-#define TERM_TIMEOUT    100000 
+#define TERM_TIMEOUT    0
 
 static void term_out( u8 data )
 {

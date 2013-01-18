@@ -229,6 +229,12 @@ u32 cmsis_get_cpu_frequency();
 #define RRAM_BIT_SLEEP_WHEN_POWERED 44
   #define SLEEP_WHEN_POWERED_ACTIVE 1
   #define SLEEP_WHEN_POWERED_DISABLED 0
+
+#define RRAM_INT_X_Z 4
+#define RRAM_INT_Y_Z 5
+#define RRAM_INT_TIME 6
+#define RRAM_INT_Z_DRIFT 7
+
 // Sleep Persistent SRAM Storage
 extern int rram_reg[RRAM_SIZE] __attribute__((section(".sret")));
 extern int rram_read_int(int byte_number);
