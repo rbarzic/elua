@@ -48,6 +48,17 @@
 #define PIN_CHECK_INTERVAL 10
 int wake_reason = WAKE_UNKNOWN;
 
+// Watchdog timer
+#define EARLY_WARNING_DELAY_MS        1000   // Will result in approx a 1 s
+                                             // periodic early warning interrupt
+
+#define RESET_DELAY_MS                2000  // Will result in approx a 2 s
+                                            // reset delay (if early warning isn't captured)
+
+#define EARLY_WARNING_THRESHOLD       (uint32_t)((16400*EARLY_WARNING_DELAY_MS)/1000)
+#define RESET_THRESHOLD               (uint32_t)((16400*RESET_DELAY_MS)/1000)
+
+
 int rram_reg[RRAM_SIZE] __attribute__((section(".sret")));
 static int rtc_remaining = 0;
 static u8 sleep_delay = 0;
@@ -100,7 +111,6 @@ void hard_fault_handler_c(unsigned int * hardfault_args)
   printf ("\n");
   printf ("\n");
 
-  sim3_pmu_reboot();
   while (1) { ;; }
 }
 
@@ -120,6 +130,16 @@ void HardFault_Handler(void)
   );
 }
 
+void WDTIMER0_IRQHandler(void)
+{
+    if ((SI32_WDTIMER_A_is_early_warning_interrupt_pending(SI32_WDTIMER_0) &
+        SI32_WDTIMER_A_is_early_warning_interrupt_enabled(SI32_WDTIMER_0)))
+    {
+      SI32_WDTIMER_A_reset_counter(SI32_WDTIMER_0); 
+      SI32_WDTIMER_A_clear_early_warning_interrupt(SI32_WDTIMER_0);
+    }
+}
+
 #if defined( BUILD_USB_CDC )
 unsigned console_uart_id = CON_UART_ID_HW_UART;
 unsigned console_cdc_active = 0;
@@ -130,6 +150,7 @@ unsigned console_cdc_active = 0;
 // SiM3 SystemInit calls this function, disable watchdog timer
 void mySystemInit(void)
 {
+  // Setup Watchdog Timer
   SI32_WDTIMER_A_stop_counter(SI32_WDTIMER_0);
 
   // enable APB clock to the Port Bank module
@@ -318,6 +339,24 @@ int platform_init()
 #if defined( INT_SYSINIT )
     cmn_int_handler( INT_SYSINIT, 0 );
 #endif
+
+  // Setup Watchdog Timer
+  SI32_WDTIMER_A_stop_counter(SI32_WDTIMER_0);
+  SI32_WDTIMER_A_reset_counter (SI32_WDTIMER_0);
+  while(SI32_WDTIMER_A_is_threshold_update_pending(SI32_WDTIMER_0));
+  SI32_WDTIMER_A_set_early_warning_threshold (SI32_WDTIMER_0, EARLY_WARNING_THRESHOLD);
+  while(SI32_WDTIMER_A_is_threshold_update_pending(SI32_WDTIMER_0));
+  SI32_WDTIMER_A_set_reset_threshold (SI32_WDTIMER_0, RESET_THRESHOLD);
+
+  // Enable Watchdog Timer
+  SI32_WDTIMER_A_start_counter(SI32_WDTIMER_0);
+
+  /// Enable Watchdog Interrupt
+  NVIC_ClearPendingIRQ(WDTIMER0_IRQn);
+  SI32_WDTIMER_A_enable_early_warning_interrupt(SI32_WDTIMER_0);
+  SI32_RSTSRC_A_enable_watchdog_timer_reset_source(SI32_RSTSRC_0);
+  NVIC_EnableIRQ(WDTIMER0_IRQn);
+
 
   return PLATFORM_OK;
 }
@@ -1461,8 +1500,8 @@ void myPB_enter_off_config()
   int i;
   for( i=0; i<4; i++)
   {
-	SI32_PBSTD_A_set_pins_analog(port_std[ i ], 0x0000);
-	SI32_PBSTD_A_write_pbskipen(port_std[ i ], 0xFFFF);
+    SI32_PBSTD_A_set_pins_analog(port_std[ i ], 0x0000);
+    SI32_PBSTD_A_write_pbskipen(port_std[ i ], 0xFFFF);
     SI32_PBSTD_A_set_pins_digital_input( port_std[ i ], 0xFFFF);
     SI32_PBSTD_A_disable_pullup_resistors( port_std[ i ] );
     SI32_PBSTD_A_write_pins_low( port_std[ i ], 0xFFFF );
