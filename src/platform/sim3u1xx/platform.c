@@ -58,6 +58,9 @@ int wake_reason = WAKE_UNKNOWN;
 #define EARLY_WARNING_THRESHOLD       (uint32_t)((16400*EARLY_WARNING_DELAY_MS)/1000)
 #define RESET_THRESHOLD               (uint32_t)((16400*RESET_DELAY_MS)/1000)
 
+#ifdef EXTRA_SLEEP_HOOK
+extern void extras_sleep_hook( int seconds );
+#endif
 
 int rram_reg[RRAM_SIZE] __attribute__((section(".sret")));
 static int rtc_remaining = 0;
@@ -295,6 +298,11 @@ int platform_init()
 
       //Put the remaining sleep time back into rram_reg[0]
       rram_write_int(RRAM_INT_SLEEPTIME, rram_read_int(RRAM_INT_SLEEPTIME) + rtc_remaining);
+
+#ifdef EXTRA_SLEEP_HOOK
+      //pass negative time to notify early wakeup
+      extras_sleep_hook(rtc_remaining * -1);
+#endif
 
       //Don't auto-sleep for some period of seconds
       sleep_delay = 5;
@@ -1354,14 +1362,10 @@ int platform_i2c_recv_byte( unsigned id, int ack )
 // ****************************************************************************
 // PMU functions
 
-#ifdef EXTRA_SLEEP_HOOK
-extern void extras_sleep_hook( void );
-#endif
-
 void sim3_pmu_sleep( unsigned seconds )
 {
   #ifdef EXTRA_SLEEP_HOOK
-    extras_sleep_hook();
+    extras_sleep_hook(seconds);
   #endif
 
   // GET CURRENT TIMER VALUE INTO SETCAP
@@ -1546,10 +1550,6 @@ void sim3_pmu_pm9( unsigned seconds )
   if(seconds == TRICK_TO_REBOOT_WITHOUT_DFU_MODE)
     seconds = 1;
 
-#ifdef EXTRA_SLEEP_HOOK
-  extras_sleep_hook();
-#endif
-
   // GET CURRENT TIMER VALUE INTO SETCAP
   //SI32_RTC_A_start_timer_capture(SI32_RTC_0);
   //while(SI32_RTC_A_is_timer_capture_in_progress(SI32_RTC_0));
@@ -1564,11 +1564,17 @@ void sim3_pmu_pm9( unsigned seconds )
   }
   else if( seconds > PIN_CHECK_INTERVAL )
   {
+#ifdef EXTRA_SLEEP_HOOK
+    extras_sleep_hook(PIN_CHECK_INTERVAL);
+#endif
     rram_write_int(RRAM_INT_SLEEPTIME, seconds - PIN_CHECK_INTERVAL);
     SI32_RTC_A_write_alarm0(SI32_RTC_0, /*SI32_RTC_A_read_setcap(SI32_RTC_0) +*/ (16384 * PIN_CHECK_INTERVAL));
   }
   else
   {
+#ifdef EXTRA_SLEEP_HOOK
+    extras_sleep_hook(seconds);
+#endif
     rram_write_int(RRAM_INT_SLEEPTIME, 0);
     SI32_RTC_A_write_alarm0(SI32_RTC_0, /*SI32_RTC_A_read_setcap(SI32_RTC_0) +*/ (16384 * seconds));
   }
