@@ -1917,7 +1917,7 @@ void platform_usb_cdc_send( u8 data )
   if(usb_buf_space(EP_1) == 0)
       return;
     
-  if(usb_buf_write(EP_1, (U8)data) == 0);
+  if(usb_buf_write(EP_1, (U8)data) == 0)
     usb_poll();//ep_write(EP_1);
 }
 
