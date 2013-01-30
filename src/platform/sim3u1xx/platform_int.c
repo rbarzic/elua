@@ -224,15 +224,43 @@ static SI32_PBSTD_A_Type* const port_std[] = { SI32_PBSTD_0, SI32_PBSTD_1, SI32_
 #define MATCH_PORTNUM2 0
 #define MATCH_PINNUM2  1
 
+#define MATCH_PORTS 3
+struct match_port
+{
+  u8 port;
+  u8 pin;
+} ;
+
+struct match_port match_config[MATCH_PORTS];
 
 void PMATCH_IRQHandler(void)
 {
+  int i;
+  for(i=0;i<MATCH_PORTS;i++)
+  {
+    if( ( ~( SI32_PBSTD_A_read_pins(port_std[ match_config[i].port ]) ^ port_std[match_config[i].port]->PM.U32) ) & (1<<(match_config[i].pin)) )
+    {
+      if( SI32_PBSTD_A_read_pins(port_std[ match_config[i].port ]) & (1<<(match_config[i].pin)) )
+      {
+        port_std[match_config[i].port]->PM_CLR = (1<<(match_config[i].pin));
+        printf("%i:%i DOWN\n",match_config[i].port, match_config[i].pin);
+        button_down(match_config[i].port, match_config[i].pin);
+      }
+      else
+      {
+        port_std[match_config[i].port]->PM_SET = (1<<(match_config[i].pin));
+        printf("%i:%i UP\n",match_config[i].port, match_config[i].pin);
+        button_up(match_config[i].port, match_config[i].pin);
+      }
+    }
+
+  }
   //printf("Match Bank 0 %x\n", SI32_PBSTD_A_read_pins(port_std[0]));
   //printf("Match Bank 1 %x\n", SI32_PBSTD_A_read_pins(port_std[1]));
   //printf("Match Bank 2 %x\n", SI32_PBSTD_A_read_pins(port_std[2]));
   //printf("Match Bank 3 %x\n", SI32_PBSTD_A_read_pins(port_std[3]));
   // First Toggle
-  if( ( ~( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) ^ port_std[MATCH_PORTNUM1]->PM.U32) ) & (1<<MATCH_PINNUM1) )
+/*  if( ( ~( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) ^ port_std[MATCH_PORTNUM1]->PM.U32) ) & (1<<MATCH_PINNUM1) )
   {
     if( SI32_PBSTD_A_read_pins(port_std[ MATCH_PORTNUM1 ]) & (1<<MATCH_PINNUM1) )
     {
@@ -263,12 +291,32 @@ void PMATCH_IRQHandler(void)
       printf("CHECKIN UP\n");
       button_up(MATCH_PORTNUM2, MATCH_PINNUM2);
     }
-  }
+  }*/
 }
 
 void platform_int_init()
 {
-  // Set up first match
+  match_config[0].port = 3;
+  match_config[0].pin = 6;
+  match_config[1].port = 0;
+  match_config[1].pin = 1;
+  match_config[2].port = 0;
+  match_config[2].pin = 0;
+  int i;
+  for(i=0;i<MATCH_PORTS;i++)
+  {
+    //printf("Setup port %i:%i\n", match_config[i].port, match_config[i].pin);
+    port_std[match_config[i].port]->PMEN_SET = (1<<(match_config[i].pin));
+    // Setup register based on power-up state
+    if( SI32_PBSTD_A_read_pins(port_std[ match_config[i].port ]) & (1<<(match_config[i].pin)) )
+    {
+      port_std[match_config[i].port]->PM_CLR = (1<<(match_config[i].pin));
+      button_down(match_config[i].port, match_config[i].pin);
+    }
+    else
+      port_std[match_config[i].port]->PM_SET = (1<<(match_config[i].pin));
+  }
+/*  // Set up first match
   port_std[MATCH_PORTNUM1]->PMEN_SET = (1<<MATCH_PINNUM1);
   //port_std[MATCH_PORTNUM1]->PM_SET = (1<<MATCH_PINNUM1);
   // Setup register based on power-up state
@@ -291,7 +339,7 @@ void platform_int_init()
     button_down(MATCH_PORTNUM2, MATCH_PINNUM2);
   }
   else
-    port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);
+    port_std[MATCH_PORTNUM2]->PM_SET = (1<<MATCH_PINNUM2);*/
 
   NVIC_ClearPendingIRQ( PMATCH_IRQn );
   NVIC_EnableIRQ( PMATCH_IRQn );

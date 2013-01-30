@@ -47,7 +47,7 @@ extern unsigned platform_get_console_uart( void );
 #endif
 #endif
 #define CON_UART_SPEED        115200
-//#define CONSOLE2_ENABLE
+#define CONSOLE2_ENABLE
 #ifdef CONSOLE2_ENABLE
 #define CON2_UART_ID          1
 #define CON2_UART_SPEED       57600
