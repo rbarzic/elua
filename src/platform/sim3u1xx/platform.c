@@ -1896,6 +1896,12 @@ int platform_flash_erase_sector( u32 sector_id )
   return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE + INTERNAL_FLASH_START_ADDRESS, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
 }
 
+int platform_flash_erase_sector_unprotected( u32 sector_id )
+{
+  flash_key_mask = 0x01;
+  return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
+}
+
 // ****************************************************************************
 // USB functions
 

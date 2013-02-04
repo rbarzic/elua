@@ -83,6 +83,10 @@ extern unsigned platform_get_console_uart( void );
 #define PLATLINE
 #endif
 
+#ifndef SIM3_EXTRA_LIBS_ROM
+#define SIM3_EXTRA_LIBS_ROM
+#endif
+
 #define LUA_PLATFORM_LIBS_ROM\
   _ROM( AUXLIB_PIO, luaopen_pio, pio_map )\
   _ROM( AUXLIB_UART, luaopen_uart, uart_map )\
@@ -174,9 +178,11 @@ u32 cmsis_get_cpu_frequency();
 
 #if defined( USE_BOOTLOADER )
 #define INTERNAL_FLASH_START_ADDRESS    0x00003000
+#define INTERNAL_FLASH_START_BOOTLOAD   0x00000000
 #else
 #define INTERNAL_FLASH_START_ADDRESS    0x00000000
 #endif
+
 
 #define BUILD_WOFS
 #endif // #ifdef ELUA_CPU_SIM3U167
