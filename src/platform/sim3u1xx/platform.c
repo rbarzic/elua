@@ -1896,10 +1896,18 @@ int platform_flash_erase_sector( u32 sector_id )
   return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE + INTERNAL_FLASH_START_ADDRESS, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
 }
 
-int platform_flash_erase_sector_unprotected( u32 sector_id )
+
+int platform_erase_bootloader( void )
 {
-  flash_key_mask = 0x01;
-  return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
+  uint32_t flash_target = 0x0;
+  while( flash_target < INTERNAL_FLASH_START_ADDRESS + BOOTLOADER_SIZE )
+  {
+    flash_key_mask = 0x01;
+    if( 0 != flash_erase( flash_target, 1 ) )
+      return -1;
+
+    flash_target += INTERNAL_FLASH_SECTOR_SIZE;
+  }
 }
 
 // ****************************************************************************
