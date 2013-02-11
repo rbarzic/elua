@@ -176,6 +176,8 @@ u32 cmsis_get_cpu_frequency();
 #define INTERNAL_FLASH_SECTOR_SIZE      1024
 #define INTERNAL_FLASH_WRITE_UNIT_SIZE  4
 
+#define BOOTLOADER_SIZE                 0x3000
+
 #define INTERNAL_FLASH_START_ADDRESS    0x00000000
 
 

@@ -594,22 +594,6 @@ const char* cmn_str64( u64 x )
   return nr + l + 1;
 }
 
-// fletcher checksum, based on http://en.wikipedia.org/wiki/Fletcher's_checksum
-u16 fletcher16( u8* data, u32 count )
-{
-   u16 sum1 = 0;
-   u16 sum2 = 0;
-   u32 index;
- 
-   for( index = 0; index < count; ++index )
-   {
-      sum1 = ( sum1 + data[ index ] ) % 255;
-      sum2 = ( sum2 + sum1 ) % 255;
-   }
- 
-   return (sum2 << 8) | sum1;
-}
-
 // Read a timeout spec from the user and return it
 // The timeout spec has the format [timer_id, timeout]. Both arguments are optional: 
 // If none is specified -> defaults to infinite timeout

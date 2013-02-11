@@ -1887,27 +1887,16 @@ u8 flash_write( u32 address, u32* data, u32 count, u8 verify )
 u32 platform_s_flash_write( const void *from, u32 toaddr, u32 size )
 {
   flash_key_mask = 0x01;
-  return flash_write( toaddr, ( u32 * )from, (size + (4 - 1))/4, 1 );
+  if( 0 != flash_write( toaddr, ( u32 * )from, (size + (INTERNAL_FLASH_WRITE_UNIT_SIZE - 1))/INTERNAL_FLASH_WRITE_UNIT_SIZE, 1 ) ) // round up size to count of 4-byte words needed
+    return 0;
+  else
+    return size;
 }
 
 int platform_flash_erase_sector( u32 sector_id )
 {
   flash_key_mask = 0x01;
   return flash_erase( sector_id * INTERNAL_FLASH_SECTOR_SIZE + INTERNAL_FLASH_START_ADDRESS, 1) == 0 ? PLATFORM_OK : PLATFORM_ERR;
-}
-
-
-int platform_erase_bootloader( void )
-{
-  uint32_t flash_target = 0x0;
-  while( flash_target < INTERNAL_FLASH_START_ADDRESS + BOOTLOADER_SIZE )
-  {
-    flash_key_mask = 0x01;
-    if( 0 != flash_erase( flash_target, 1 ) )
-      return -1;
-
-    flash_target += INTERNAL_FLASH_SECTOR_SIZE;
-  }
 }
 
 // ****************************************************************************
