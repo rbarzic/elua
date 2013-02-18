@@ -210,7 +210,7 @@ static int romfs_open_r( struct _reent *r, const char *path, int flags, int mode
     // Is there enough space on the FS for another file?
     if( pfsdata->max_size - firstfree + 1 < strlen( path ) + 1 + WOFS_MIN_NEEDED_SIZE + WOFS_DEL_FIELD_SIZE )
     {
-      r->_errno = ENOSPC;
+      r->_errno = ENOSPC; // hook point for when to GC
       return -1;
     }
     // Write the name of the file
@@ -352,6 +352,52 @@ static void* romfs_opendir_r( struct _reent *r, const char* dname, void *pdata )
   return NULL;
 }
 
+// Finds the offset to the first file
+u32 find_first_deleted_file(  void *pdata  )
+{
+  FSDATA *pfsdata = ( FSDATA* )pdata;
+  u32 off = 0;
+  u32 startoff;
+  int is_deleted;
+
+  while( 1 )
+  {
+    if( romfsh_read8( off, pfsdata ) == WOFS_END_MARKER_CHAR )
+      return NULL;
+    startoff = off; // Note beginning of file record
+    while( ( romfsh_read8( off ++, pfsdata ) ) != '\0' );
+    off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
+
+    // If WOFS, check if file is marked as deleted
+    if( romfsh_is_wofs( pfsdata ) )
+    {
+      is_deleted = romfsh_read8( off, pfsdata ) == WOFS_FILE_DELETED;
+      if( is_deleted )
+        break;
+      off += WOFS_DEL_FIELD_SIZE;
+    }
+
+    // Jump offset ahead by length field & file size
+    off += ROMFS_SIZE_LEN;
+    off += pent->fsize;
+
+    // If WOFS, also advance offset by deleted file field
+    if( romfsh_is_wofs( pfsdata ) )
+      off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
+  }
+  return startoff;
+}
+
+int romfs_repack( void )
+{
+  // Find sector we're going to have to repack first
+  u32 addr = find_first_deleted_file( pdata );
+
+  // Start copying this sector, excluding erased files until spare sector is full
+
+
+}
+
 // readdir
 extern struct dm_dirent dm_shared_dirent;
 extern char dm_shared_fname[ DM_MAX_FNAME_LENGTH + 1 ];
@@ -365,12 +411,19 @@ static struct dm_dirent* romfs_readdir_r( struct _reent *r, void *d, void *pdata
  
   while( 1 )
   {
+    // Check if we're at the end of the FS
     if( romfsh_read8( off, pfsdata ) == WOFS_END_MARKER_CHAR )
       return NULL;
+
+    // Read filename
     j = 0;
     while( ( dm_shared_fname[ j ++ ] = romfsh_read8( off ++, pfsdata ) ) != '\0' );
     pent->fname = dm_shared_fname;
+
+    // Move to next aligned offset after name
     off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
+
+    // If WOFS, check if file is marked as deleted
     if( romfsh_is_wofs( pfsdata ) )
     {
       is_deleted = romfsh_read8( off, pfsdata ) == WOFS_FILE_DELETED;
@@ -378,14 +431,24 @@ static struct dm_dirent* romfs_readdir_r( struct _reent *r, void *d, void *pdata
     }
     else
       is_deleted = 0;
+
+    // Get file size file and pack into fsize
     pent->fsize = romfsh_read8( off, pfsdata ) + ( romfsh_read8( off + 1, pfsdata ) << 8 );
     pent->fsize += ( romfsh_read8( off + 2, pfsdata ) << 16 ) + ( romfsh_read8( off + 3, pfsdata ) << 24 );
+    
+    // fill in file time & flags
     pent->ftime = 0;
     pent->flags = 0;
+
+    // Jump offset ahead by length field & file size
     off += ROMFS_SIZE_LEN;
     off += pent->fsize;
+
+    // If WOFS, also advance offset by deleted file field
     if( romfsh_is_wofs( pfsdata ) )
       off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
+
+    // If not deleted, break out of while loop
     if( !is_deleted )
       break;
   }
