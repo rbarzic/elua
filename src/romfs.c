@@ -390,11 +390,15 @@ u32 find_first_deleted_file(  void *pdata  )
 
 int romfs_repack( void )
 {
+  u32 sstart, send, addr, snum;
+
   // Find sector we're going to have to repack first
-  u32 addr = find_first_deleted_file( pdata );
+  addr = find_first_deleted_file( pdata );
 
   // Start copying this sector, excluding erased files until spare sector is full
+  snum = platform_flash_find_sector( addr, &sstart, &send );
 
+  
 
 }
 
