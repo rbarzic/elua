@@ -352,53 +352,156 @@ static void* romfs_opendir_r( struct _reent *r, const char* dname, void *pdata )
   return NULL;
 }
 
-// Finds the offset to the first file
-u32 find_first_deleted_file(  void *pdata  )
+// Returns file info (0=end of FS, )
+int romfs_walk_fs( u32 *start, u32 *end, void *pdata  )
 {
   FSDATA *pfsdata = ( FSDATA* )pdata;
-  u32 off = 0;
-  u32 startoff;
+  u32 off = *start;
+  u32 fsize;
   int is_deleted;
 
-  while( 1 )
+  if( romfsh_read8( off, pfsdata ) == WOFS_END_MARKER_CHAR )
+    return -1;
+  while( ( romfsh_read8( off ++, pfsdata ) ) != '\0' );
+
+  // Move to next aligned position
+  off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
+
+  // If WOFS, check if file is marked as deleted
+  if( romfsh_is_wofs( pfsdata ) )
   {
-    if( romfsh_read8( off, pfsdata ) == WOFS_END_MARKER_CHAR )
-      return NULL;
-    startoff = off; // Note beginning of file record
-    while( ( romfsh_read8( off ++, pfsdata ) ) != '\0' );
+    is_deleted = romfsh_read8( off, pfsdata ) == WOFS_FILE_DELETED;
+    off += WOFS_DEL_FIELD_SIZE;
+  }
+  else
+    is_deleted = 0;
+
+  fsize = romfsh_read8( off, pfsdata ) + ( romfsh_read8( off + 1, pfsdata ) << 8 );
+  fsize += ( romfsh_read8( off + 2, pfsdata ) << 16 ) + ( romfsh_read8( off + 3, pfsdata ) << 24 );
+
+  printf("Fsize: %d", fsize);
+
+  // Jump offset ahead by length field & file size
+  off += ROMFS_SIZE_LEN;
+  off += fsize;
+
+  // If WOFS, also advance offset by deleted file field
+  if( romfsh_is_wofs( pfsdata ) )
     off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
 
-    // If WOFS, check if file is marked as deleted
-    if( romfsh_is_wofs( pfsdata ) )
-    {
-      is_deleted = romfsh_read8( off, pfsdata ) == WOFS_FILE_DELETED;
-      if( is_deleted )
-        break;
-      off += WOFS_DEL_FIELD_SIZE;
-    }
+  *end = off;
 
-    // Jump offset ahead by length field & file size
-    off += ROMFS_SIZE_LEN;
-    off += pent->fsize;
-
-    // If WOFS, also advance offset by deleted file field
-    if( romfsh_is_wofs( pfsdata ) )
-      off = ( off + ROMFS_ALIGN - 1 ) & ~( ROMFS_ALIGN - 1 );
-  }
-  return startoff;
+  // Return whether file is deleted or not
+  if( is_deleted )
+    return 1;
+  else
+    return 0;
 }
+
+// Copies file up to end of sector, returning number of bytes written
+int romfs_relocate_file( u32 *from, u32 *to )
+{
+  // Start copying to spare sector
+  for(sctr = sstart; 
+}
+
+#define LAST_SECTOR_NUM ( ( INTERNAL_FLASH_SIZE - INTERNAL_FLASH_START_ADDRESS )/  INTERNAL_FLASH_SECTOR_SIZE ) - 1 )
+#define LAST_SECTOR_END  ( INTERNAL_FLASH_SIZE - INTERNAL_FLASH_START_ADDRESS )
+#define LAST_SECTOR_START ( LAST_SECTOR_END - INTERNAL_FLASH_SECTOR_SIZE )
 
 int romfs_repack( void )
 {
-  u32 sstart, send, addr, snum;
+  u32 startf, endf;
+  u32 sstart, send, snum;
+  u32 write_ptr, fs_read_ptr;
+  u32 tmp;
+  int ret;
 
-  // Find sector we're going to have to repack first
-  addr = find_first_deleted_file( pdata );
+  // 1 - Find first of any deleted files
+  startf = 0;
+  do
+  {
+    ret = romfs_walk_fs( &startf, &endf, pdata );
+    startf = endf + 1;
+  } while( ret == 0 )
 
-  // Start copying this sector, excluding erased files until spare sector is full
-  snum = platform_flash_find_sector( addr, &sstart, &send );
+  if( ret == -1)
+  {
+    printf("Can't repack, no deleted files!");
+    return 1;
+  }
 
-  
+  // 2 - Find sector it came from
+  snum = platform_flash_find_sector( startf, &sstart, &send );
+  printf("Start Sector: %d\n", snum );
+
+  // 3 - start copying files until source sector is exhausted
+
+  // Copy data exactly up until deleted file
+  // FIXME? Alignment?
+  platform_flash_write( ( u32* )fs_read_ptr, cur_ptr, startf - sstart );
+  cur_ptr += startf - sstart;
+
+  // Fill out last sector from FS until source sector is exhausted
+  write_ptr = LAST_SECTOR_START;
+  while( write_ptr < LAST_SECTOR_START + send - sstart  && ret != -1 )
+  {
+    startf = endf;
+    ret = romfs_walk_fs( &startf, &endf, pdata ); // find end of file & type
+
+    // if we've discovered a non-deleted file, copy it
+    if( ret == 0 )
+    {
+      fs_read_ptr = startf;
+      tmp = fsmin( endf - fs_read_ptr, LAST_SECTOR_START + send - sstart - fs_read_ptr );
+      platform_flash_write( ( u32* )fs_read_ptr, write_ptr, tmp);
+      fs_read_ptr += tmp;
+      write_ptr  += tmp;
+    }
+  }
+
+  // 4 - erase origin sector and copy back
+  if( platform_flash_erase_sector( snum ) == PLATFORM_ERR )
+  {
+    printf("Couldn't erase: %d", snum);
+    return 1;
+  }
+
+  tmp = LAST_SECTOR_START;
+  platform_flash_write( ( u32* )tmp, sstart, write_ptr - LAST_SECTOR_START);
+  write_ptr = sstart + write_ptr - LAST_SECTOR_START; // Now points into origin sector
+
+  // 5 - erase spare sector
+  if( platform_flash_erase_sector( LAST_SECTOR_NUM ) == PLATFORM_ERR )
+  {
+    printf("Couldn't erase: %d", LAST_SECTOR_NUM);
+    return 1;
+  }
+
+  // Write next section of any unfinished files
+  if( fs_read_ptr < endf )
+  {
+    tmp = fsmin( endf - fs_read_ptr, send - fs_read_ptr);
+    platform_flash_write( ( u32* )fs_read_ptr, write_ptr, tmp);
+    fs_read_ptr += tmp;
+  }
+
+  // 6 - Fill "source" sector from FS, if space remains
+  while( write_ptr < send  && ret != -1 )
+  {
+    startf = endf;
+    ret = romfs_walk_fs( &startf, &endf, pdata ); // find end of file & type
+
+    // if we've discovered a non-deleted file, copy it
+    if( ret == 0 )
+    {
+      fs_read_ptr = startf;
+      tmp = fsmin( endf - fs_read_ptr, LAST_SECTOR_START + sstart - send - fs_read_ptr);
+      platform_flash_write( ( u32* )fs_read_ptr, write_ptr, tmp);
+      fs_read_ptr += tmp;
+      write_ptr  += tmp;
+    }
+  }
 
 }
 
