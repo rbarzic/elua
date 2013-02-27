@@ -402,10 +402,9 @@ int romfs_walk_fs( u32 *start, u32 *end, void *pdata  )
 int romfs_relocate_file( u32 *from, u32 *to )
 {
   // Start copying to spare sector
-  for(sctr = sstart; 
 }
 
-#define LAST_SECTOR_NUM ( ( INTERNAL_FLASH_SIZE - INTERNAL_FLASH_START_ADDRESS )/  INTERNAL_FLASH_SECTOR_SIZE ) - 1 )
+#define LAST_SECTOR_NUM ( ( ( INTERNAL_FLASH_SIZE - INTERNAL_FLASH_START_ADDRESS ) /  INTERNAL_FLASH_SECTOR_SIZE ) - 1 )
 #define LAST_SECTOR_END  ( INTERNAL_FLASH_SIZE - INTERNAL_FLASH_START_ADDRESS )
 #define LAST_SECTOR_START ( LAST_SECTOR_END - INTERNAL_FLASH_SECTOR_SIZE )
 
