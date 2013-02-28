@@ -417,17 +417,18 @@ int romfs_repack( void )
   int ret;
 
   // 1 - Find first of any deleted files
-  startf = 0;
+  startf = 0; // starting offset at beginning of fs
   do
   {
     ret = romfs_walk_fs( &startf, &endf, pdata );
     startf = endf + 1;
-  } while( ret == 0 )
+  } while( ret == 0 ) // Exit when we find something other than a "regular" file
 
+  // If we get to the end, return
   if( ret == -1)
   {
     printf("Can't repack, no deleted files!");
-    return 1;
+    return 0;
   }
 
   // 2 - Find sector it came from
@@ -438,14 +439,15 @@ int romfs_repack( void )
 
   // Copy data exactly up until deleted file
   // FIXME? Alignment?
-  platform_flash_write( ( u32* )fs_read_ptr, cur_ptr, startf - sstart );
-  cur_ptr += startf - sstart;
+  write_ptr = LAST_SECTOR_START; // Beginning of "spare" sector
+  fs_read_ptr = sstart; // Beginning of first deleted file's sector
+  platform_flash_write( ( u32* )fs_read_ptr, write_ptr, startf - sstart );
+  write_ptr += startf - sstart;
 
-  // Fill out last sector from FS until source sector is exhausted
-  write_ptr = LAST_SECTOR_START;
+  // Fill out last sector from FS until source sector is exhausted or end of FS
   while( write_ptr < LAST_SECTOR_START + send - sstart  && ret != -1 )
   {
-    startf = endf;
+    startf = endf; // Starting point is last ending point
     ret = romfs_walk_fs( &startf, &endf, pdata ); // find end of file & type
 
     // if we've discovered a non-deleted file, copy it
@@ -454,18 +456,19 @@ int romfs_repack( void )
       fs_read_ptr = startf;
       tmp = fsmin( endf - fs_read_ptr, LAST_SECTOR_START + send - sstart - fs_read_ptr );
       platform_flash_write( ( u32* )fs_read_ptr, write_ptr, tmp);
-      fs_read_ptr += tmp;
+      fs_read_ptr += tmp; // Advance so that read ptr is correct when we exit this loop
       write_ptr  += tmp;
     }
   }
 
-  // 4 - erase origin sector and copy back
+  // 4 - erase origin sector 
   if( platform_flash_erase_sector( snum ) == PLATFORM_ERR )
   {
     printf("Couldn't erase: %d", snum);
     return 1;
   }
 
+  // ... and copy back
   tmp = LAST_SECTOR_START;
   platform_flash_write( ( u32* )tmp, sstart, write_ptr - LAST_SECTOR_START);
   write_ptr = sstart + write_ptr - LAST_SECTOR_START; // Now points into origin sector
@@ -477,15 +480,17 @@ int romfs_repack( void )
     return 1;
   }
 
-  // Write next section of any unfinished files
+  // 6 - Fill "source" sector from FS, if space remains
+  // Start filling in unfinished files
   if( fs_read_ptr < endf )
   {
     tmp = fsmin( endf - fs_read_ptr, send - fs_read_ptr);
     platform_flash_write( ( u32* )fs_read_ptr, write_ptr, tmp);
     fs_read_ptr += tmp;
+    write_ptr += tmp;
   }
 
-  // 6 - Fill "source" sector from FS, if space remains
+  // Put more files if they will fit
   while( write_ptr < send  && ret != -1 )
   {
     startf = endf;
