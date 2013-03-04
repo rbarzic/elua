@@ -82,6 +82,7 @@ typedef struct
 // FS functions
 int romfs_init();
 int wofs_format();
+int wofs_repack();
 
 #endif
 

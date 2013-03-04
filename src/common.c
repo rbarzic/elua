@@ -485,7 +485,7 @@ static u32 flashh_find_sector( u32 address, u32 *pstart, u32 *pend )
 #endif // #ifdef INTERNAL_FLASH_SECTOR_SIZE
 }
 
-u32 platform_flash_find_sector( u32 address, u32 *pstart, u32 *pend )
+u32 platform_flash_find_sector( u32 addr, u32 *pstart, u32 *pend )
 {
   return flashh_find_sector( addr, pstart, pend );
 }

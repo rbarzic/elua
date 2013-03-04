@@ -71,6 +71,7 @@ static void shell_help( int argc, char **argv )
   printf( "  recv [path] - receive a file via XMODEM. If path is given save it there, otherwise run it.\n");
   printf( "  cp <src> <dst> - copy source file 'src' to 'dst'\n" );
   printf( "  wofmt       - format the internal WOFS\n" );
+  printf( "  worepack    - repack WOFS\n" );
   printf( "  ver         - print eLua version\n" );
 }
 
@@ -386,6 +387,23 @@ static void shell_wofmt( int argc, char **argv )
 #endif // #ifndef BUILD_WOFS
 }
 
+static void shell_worepack( int argc, char **argv )
+{
+#ifndef BUILD_WOFS
+  printf( "WOFS not enabled.\n" );
+#else // #ifndef BUILD_WOFS
+
+  printf( "Formatting ... " );
+  if( !wofs_repack() )
+  {
+    printf( "\ni*** ERROR ***: unable to erase the internal flash. WOFS might be compromised.\n" );
+    printf( "It is advised to re-flash the eLua image.\n" );
+  }
+  else
+    printf( " done.\n" );
+#endif // #ifndef BUILD_WOFS
+}
+
 // mkdir handler
 static void shell_mkdir( int argc, char **argv )
 {
@@ -412,6 +430,7 @@ static const SHELL_COMMAND shell_commands[] =
   { "type", shell_cat },
   { "cp", shell_cp },
   { "wofmt", shell_wofmt },
+  { "worepack", shell_worepack },
   { "mkdir", shell_mkdir },
   { NULL, NULL }
 };
