@@ -160,6 +160,11 @@ end
 check_command = function( cmd )
   local res = os.execute( cmd .. " > .build.temp 2>&1" )
   os.remove( ".build.temp" )
+  -- difference between 5.1 and 5.2 : os.execute returns a boolean in 5.2, and an int in 5.1
+  if res == true then
+     res = 0
+  end
+
   return res
 end
 

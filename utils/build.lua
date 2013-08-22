@@ -326,6 +326,10 @@ _target.execute = function( self, cmd )
     cmd = cmd:sub( 1, t - 1 ) .. " @tmpcmdline"
   end
   local code = os.execute( cmd )
+  -- difference between 5.1 and 5.2 : os.execute returns a boolean in 5.2, and an int in 5.1
+  if code == true then
+     code = 0
+  end
   os.remove( "tmpcmdline" )
   return code
 end
