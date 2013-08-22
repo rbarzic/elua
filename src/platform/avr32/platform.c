@@ -64,6 +64,10 @@ static int eth_timer_fired;
 
 #endif // BUILD_UIP
 
+#if AVR32_TC_NUM>1
+#define AVR32_TC AVR32_TC0
+#endif
+
 // ****************************************************************************
 // AVR32 system timer implementation
 
@@ -78,6 +82,7 @@ static int eth_timer_fired;
 
 #define SYSTIMER_PWM_CH       6
 
+#ifndef ALTERNATE_SYSTIMER
 __attribute__((__interrupt__)) static void systimer_int_handler()
 {
   volatile u32 dummy = AVR32_PWM.isr; // clear interrupt
@@ -85,6 +90,7 @@ __attribute__((__interrupt__)) static void systimer_int_handler()
   ( void )dummy;
   cmn_systimer_periodic();
 }
+
 
 static void platform_systimer_init()
 {
@@ -111,6 +117,23 @@ static void platform_systimer_init()
   // Enable the channel
   AVR32_PWM.ena = 1 << SYSTIMER_PWM_CH;
 }
+#else
+__attribute__((__interrupt__)) static void systimer_int_handler()
+{
+  // FIXME
+  // ( void )dummy;
+  cmn_systimer_periodic();
+}
+
+
+static void platform_systimer_init()
+{
+  // FIXME
+}
+
+
+
+#endif
 
 // ****************************************************************************
 // Platform initialization
@@ -632,6 +655,7 @@ int platform_s_timer_set_match_int( unsigned id, timer_data_type period_us, int 
   return PLATFORM_TIMER_INT_OK;
 }
 
+#ifndef ALTERNATE_SYSTIMER
 u64 platform_timer_sys_raw_read()
 {
   return AVR32_PWM.channel[ SYSTIMER_PWM_CH ].ccnt;
@@ -647,10 +671,35 @@ void platform_timer_sys_enable_int()
   AVR32_PWM.ier = 1 << SYSTIMER_PWM_CH;
 }
 
+
+
+#else
+u64 platform_timer_sys_raw_read()
+{
+  // return AVR32_PWM.channel[ SYSTIMER_PWM_CH ].ccnt;
+  return 0; // FIXME
+}
+
+void platform_timer_sys_disable_int()
+{
+  // AVR32_PWM.idr = 1 << SYSTIMER_PWM_CH;
+  // FIXME
+}
+
+void platform_timer_sys_enable_int()
+{
+  // AVR32_PWM.ier = 1 << SYSTIMER_PWM_CH;
+  // FIXME
+}
+
+#endif
+
+
 timer_data_type platform_timer_read_sys()
 {
   return cmn_systimer_get();
 }
+
 
 // ****************************************************************************
 // SPI functions

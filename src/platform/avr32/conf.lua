@@ -1,18 +1,21 @@
 -- Configuration file for the AVR32 microcontrollers
 
-specific_files = "crt0.s trampoline.s platform.c exception.s intc.c pm.c flashc.c pm_conf_clocks.c usart.c gpio.c tc.c spi.c platform_int.c adc.c pwm.c i2c.c ethernet.c lcd.c rtc.c usb-cdc.c"
+specific_files = "crt0.s trampoline.s platform.c exception.s intc.c pm.c flashc.c pm_conf_clocks.c usart.c gpio.c tc.c spi.c platform_int.c adc.c i2c.c ethernet.c lcd.c rtc.c usb-cdc.c"
 addm( "FORAVR32" )
 
 -- See board.h for possible BOARD values.
 if comp.board:upper()  == "ATEVK1100" then
-  specific_files = specific_files .. " sdramc.c"
+  specific_files = specific_files .. " sdramc.c" .. " pwm.c"
   addm( 'BOARD=1' )
 elseif comp.board:upper()  == "ATEVK1101" then
+  specific_files = specific_files .. " pwm.c"
   addm( 'BOARD=2' )
 elseif comp.board:upper()  == "ATEVK1104" then
+   specific_files = specific_files .. " sdramc.c"
   addm( 'BOARD=4' )
+  addm( 'ALTERNATE_SYSTIMER' )
 elseif comp.board:upper():sub( 1,7 )  == "MIZAR32" then
-  specific_files = specific_files .. " sdramc.c"
+  specific_files = specific_files .. " sdramc.c" .. " pwm.c"
   addm( 'BOARD=98' )
 else
   print( sf( "Invalid board for %s platform (%s)", platform, comp.board ) )
