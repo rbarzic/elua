@@ -908,13 +908,14 @@ int platform_adc_start_sequence( )
 
 // ****************************************************************************
 // PWM functions
+#if NUM_PWM > 0
 
 // Sanity check
 #if NUM_PWM > AVR32_PWM_CHANNEL_LENGTH
 # error "NUM_PWM > AVR32_PWM_CHANNEL_LENGTH"
 #endif
 
-#if NUM_PWM > 0
+
 
 // One PWM channel is used by the AVR32 system timer (look at the start of this
 // file for more information). Currently this channel is hardcoded in platform.c

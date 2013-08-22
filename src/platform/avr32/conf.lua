@@ -9,6 +9,8 @@ if comp.board:upper()  == "ATEVK1100" then
   addm( 'BOARD=1' )
 elseif comp.board:upper()  == "ATEVK1101" then
   addm( 'BOARD=2' )
+elseif comp.board:upper()  == "ATEVK1104" then
+  addm( 'BOARD=4' )
 elseif comp.board:upper():sub( 1,7 )  == "MIZAR32" then
   specific_files = specific_files .. " sdramc.c"
   addm( 'BOARD=98' )
