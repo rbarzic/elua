@@ -29,7 +29,7 @@
 // #define PIO_PIN_ARRAY { n1, n2, ... } to define pins per port in an array
 // Use #define PIO_PINS_PER_PORT 0 if this isn't needed
 #define PIO_PIN_ARRAY         { 31, 32, 32, 14 }
-#define AVR32_NUM_GPIO        110 // actually 109, but consider also PA31
+#define AVR32_NUM_GPIO        128 // actually 109, but consider also PA31
 
 #define RAM_SIZE 0x20000
 #define INTERNAL_RAM1_FIRST_FREE  end

@@ -144,6 +144,7 @@ u32 platform_ethernet_setup( void );
 extern int pm_configure_clocks( pm_freq_param_t *param );
 
 static u32 platform_timer_set_clock( unsigned id, u32 clock );
+// static u32 platform_genclk_setup(void) ;
 
 #ifdef BUILD_ADC
 __attribute__((__interrupt__)) static void adc_int_handler();
@@ -201,6 +202,11 @@ int platform_init()
   // Setup clocks
   if( PM_FREQ_STATUS_FAIL == pm_configure_clocks( &pm_freq_param ) )
     return PLATFORM_ERR;
+
+  //platform_genclk_setup();
+  //while(1);
+
+
 #ifdef FOSC32
   // Select the 32-kHz oscillator crystal
   pm_enable_osc32_crystal (&AVR32_PM );
@@ -1295,3 +1301,28 @@ void platform_cdc_timer_handler()
 }
 #endif // #ifdef BUILD_USB_CDC
 
+
+// External generic clock support
+//
+//
+//static const gpio_map_t gc_pins =
+//{
+//  // GCLK 0
+//  { AVR32_PM_GCLK_0_0_PIN , AVR32_PM_GCLK_0_0_FUNCTION },
+//  // GCLK 1
+//  { AVR32_PM_GCLK_1_0_PIN , AVR32_PM_GCLK_1_0_FUNCTION }, // PB11 = USART1 - RXD - but we use PA5/PA6 for USART1
+//                                                          // in EVK1104 :-)
+//};
+//
+//u32 platform_genclk_setup(void) 
+//{
+//  gpio_enable_module(&gc_pins[1], 1 );
+//  pm_gc_setup(&AVR32_PM,
+//              1, // gc #
+//              0, // PLL
+//              0, // osc0/pll0
+//              1,1); //diven = 1, div = 1 -> div/4
+//              
+//  pm_gc_enable(&AVR32_PM,1);
+//  return PLATFORM_OK;
+//}
