@@ -5,15 +5,20 @@ addm( "FORAVR32" )
 
 -- See board.h for possible BOARD values.
 if comp.board:upper()  == "ATEVK1100" then
-  specific_files = specific_files .. " sdramc.c" .. " pwm.c"
+  specific_files = specific_files .. " sdramc.c" .. " pwm.c" .. " cpu_at32uc3a0xxx.c"
+  
   addm( 'BOARD=1' )
+  addm('CPU_CUSTOM_PIO_MT_INDEX')
 elseif comp.board:upper()  == "ATEVK1101" then
-  specific_files = specific_files .. " pwm.c"
+  specific_files = specific_files .. " pwm.c"  .. " cpu_at32uc3b0xxx.c"
   addm( 'BOARD=2' )
+  addm('CPU_CUSTOM_PIO_MT_INDEX')
 elseif comp.board:upper()  == "ATEVK1104" then
-   specific_files = specific_files .. " sdramc.c"
+   specific_files = specific_files .. " sdramc.c" .. " cpu_at32uc3a3xxx.c"
   addm( 'BOARD=4' )
   addm( 'ALTERNATE_SYSTIMER' )
+  addm('CPU_CUSTOM_PIO_MT_INDEX')
+
 elseif comp.board:upper():sub( 1,7 )  == "MIZAR32" then
   specific_files = specific_files .. " sdramc.c" .. " pwm.c"
   addm( 'BOARD=98' )

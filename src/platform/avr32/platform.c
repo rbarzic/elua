@@ -161,6 +161,31 @@ const u32 uart_base_addr[ ] = {
 #endif
 };
 
+
+
+//void _delay(unsigned delay) {
+//  unsigned volatile i = delay;
+//  while(i--);
+//}
+//void debug_evk1104(unsigned pad)
+//{
+//   
+//  volatile avr32_gpio_port_t *gpio_regs;
+//  unsigned port = pad/32;
+//  unsigned pin = pad %32;
+//  gpio_regs = &AVR32_GPIO.port[ port ];
+//
+//  gpio_regs->oders = 1<<pin;  // Enable output drivers
+//  gpio_regs->gpers = 1<<pin;  // Make GPIO control this pin
+//  while(1) {
+//    gpio_regs->ovrt = 1<<pin;
+//    _delay(1000000);
+//  }
+//  
+//   
+//}
+
+
 int platform_init()
 {
   pm_freq_param_t pm_freq_param =
@@ -196,6 +221,9 @@ int platform_init()
   volatile avr32_tc_t *tc = &AVR32_TC;
   unsigned i;
 
+
+  
+
   Disable_global_interrupt();
   INTC_init_interrupts();
 
@@ -206,6 +234,7 @@ int platform_init()
   //platform_genclk_setup();
   //while(1);
 
+  
 
 #ifdef FOSC32
   // Select the 32-kHz oscillator crystal
@@ -429,7 +458,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
 
   // Set actual interface
   gpio_enable_module(uart_pins + id * 2, 2 );
-  if ( usart_init_rs232( pusart, &opts, REQ_PBA_FREQ ) != USART_SUCCESS )
+  if ( usart_init_rs232( pusart, &opts, REQ_PBA_FREQ ) != USART_SUCCESS )    
     return 0;
 
   // Return actual baud here
